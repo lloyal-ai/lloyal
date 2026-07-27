@@ -1,36 +1,33 @@
 /**
- * The web target's host — serves your harness to browsers over wss.
+ * The web target's boot — the `serve/main.ts` of the canonical serving
+ * architecture. It resolves the resident model, hands the harness to the host via
+ * the DRIVER (`createServedHostDriver`), and stands up the `ws` front door.
  *
- * Stands up a `ws` server that runs N browser Sessions over ONE resident model:
- * `@lloyal-labs/host`'s `ModelRuntimeHost` weak-caches the weights, so each
- * Session gets only its own KV context + event bus. Each connection binds to a
- * Session via binding's `wss()`; the browser connects with `connectWss` (see
- * `web-bridge.ts`). It's the SAME `harness(ctx, events, commands)` the cli and
- * desktop run — only the binding differs.
+ * The split is deliberate and matches reasoning.run (the production reference):
+ * the host (`@lloyal-labs/host`) imports no harness; the harness
+ * (`harness/harness.ts`) imports no host; the DRIVER (`./driver.ts`) is the only
+ * file that knows both — this boot just wires config + the socket to it. It's the
+ * SAME `harness(ctx, events, commands)` the cli and desktop run; only the binding
+ * (wss, here) differs.
  *
- * `npm run serve` builds + starts this; then `npm run dev:web` serves the
- * browser app that talks to it. Config from `harness.yml` + env (PORT / HOST /
- * MAX_SESSIONS). Loopback + no-auth for local dev.
+ * `npm run serve` builds + starts this; then `npm run dev:web` serves the browser
+ * app that talks to it. Config from `harness.yml` + env (PORT / HOST /
+ * MAX_SESSIONS). Loopback + no-auth for local dev — TLS/auth terminate upstream.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { randomUUID } from "node:crypto";
-import { parse } from "yaml";
-import { main, suspend, call, createSignal, type Signal } from "effection";
+import { main, suspend, call } from "effection";
+import type { Signal } from "effection";
 import { WebSocketServer } from "ws";
-import { createBus, type EventBus } from "@lloyal-labs/binding";
-import { wss, type WsServerSocket } from "@lloyal-labs/binding/node";
-import {
-  createModelRuntimeHost,
-  type Materialised,
-  type ServedHarness,
-  type SessionState,
-} from "@lloyal-labs/host";
-import { createContext } from "@lloyal-labs/lloyal.node";
-import type { SessionContext } from "@lloyal-labs/sdk";
-import { resolveModel, provisionAppModels } from "@lloyal-labs/rig/node";
-import { harness, apps } from "../../harness/harness.js";
+import type { WsServerSocket } from "@lloyal-labs/binding/node";
+import type { EventBus } from "@lloyal-labs/binding";
+import { resolveModel } from "@lloyal-labs/rig/node";
+import { parse } from "yaml";
+import { createServedHostDriver } from "./driver.js";
+import { apps } from "../../harness/harness.js";
+import { runServedSession } from "../../harness/served-session.js";
 import type { WorkflowEvent, Command } from "../../harness/protocol.js";
+import type { Config } from "../../harness/config-types.js";
 
 interface ModelEntry {
   id?: string;
@@ -39,22 +36,32 @@ interface ModelEntry {
 }
 
 function loadConfig(): { model?: { llm?: ModelEntry; reranker?: ModelEntry } } {
+  // Fail loud, like the cli boot: a missing or malformed harness.yml must not be
+  // silently swallowed into `{}` (which would fall through to default model
+  // resolution and serve an unexpected model).
+  let raw: string;
   try {
-    return (parse(readFileSync(join(process.cwd(), "harness.yml"), "utf8")) ?? {}) as {
-      model?: { llm?: ModelEntry; reranker?: ModelEntry };
-    };
+    raw = readFileSync(join(process.cwd(), "harness.yml"), "utf8");
   } catch {
-    return {};
+    process.stderr.write("harness.yml not found — run `npm run serve` from your harness project root.\n");
+    process.exit(1);
+  }
+  try {
+    return (parse(raw) ?? {}) as { model?: { llm?: ModelEntry; reranker?: ModelEntry } };
+  } catch (err) {
+    process.stderr.write(
+      `harness.yml is not valid YAML: ${err instanceof Error ? err.message : String(err)}\n`,
+    );
+    process.exit(1);
   }
 }
 
 const config = loadConfig();
 const llm: ModelEntry = config.model?.llm ?? {};
+const reranker: ModelEntry = config.model?.reranker ?? {};
 const PORT = Number(process.env.PORT) || 8787;
 const HOST = process.env.HOST ?? "127.0.0.1";
 const MAX_SESSIONS = Number(process.env.MAX_SESSIONS) || 4;
-
-type Channels = { uiChannel: EventBus<WorkflowEvent>; commands: Signal<Command, void> };
 
 main(function* () {
   // Resolve the resident model ONCE (fetched + digest-verified on first run, no
@@ -71,91 +78,61 @@ main(function* () {
     }),
   );
 
-  // Channels a connection stashes BEFORE admission; `materialise` claims them so
-  // the socket (bound at connect time) and the harness share one bus/command pair.
-  const pending = new Map<string, Channels>();
-
-  const served: ServedHarness<SessionContext> = {
-    async materialise(sessionId: string): Promise<Materialised<SessionContext>> {
-      const ch = pending.get(sessionId);
-      if (!ch) throw new Error(`serve: no channels for session ${sessionId}`);
-      pending.delete(sessionId);
-      const context = (await createContext({
-        modelPath,
-        nCtx: llm.context ?? 32768,
-        nSeqMax: 32,
-        typeK: "q4_0",
-        typeV: "q4_0",
-      })) as unknown as SessionContext;
-      return {
-        context,
-        uiChannel: ch.uiChannel,
-        commands: ch.commands,
-        dispose() {
-          try {
-            (context as { dispose?: () => void }).dispose?.();
-          } catch {
-            /* freeing the session context — not the host's error to surface */
-          }
+  // Resolve the reranker to a concrete path ONLY if an enabled app declares the
+  // service — the default wikipedia app needs none, so we skip the ~630 MB fetch.
+  // resolveModel honors a harness.yml pin (id or path) and digest-verifies on
+  // first run, so `cfg.model.reranker` is then always a resolved PATH (never a
+  // bare id) — the per-session provisioning below uses it as-is.
+  let rerankerPath: string | undefined;
+  const needsReranker = apps.some((a) => (a.manifest?.services ?? []).includes("reranker"));
+  if (needsReranker) {
+    rerankerPath = yield* call(() =>
+      resolveModel({
+        projectRoot: process.cwd(),
+        role: "reranker",
+        spec: { id: reranker.id, path: reranker.path },
+        onProgress: (got, total) => {
+          const pct = total > 0 ? Math.round((100 * got) / total) : 0;
+          process.stderr.write(`\rfetching reranker — ${pct}%   `);
         },
-      };
-    },
-    *run(m: Materialised<SessionContext>) {
-      // Runner-less: provision the enabled apps' services (a no-op unless an app
-      // needs a reranker) into THIS session's scope, then run the harness.
-      yield* provisionAppModels({ apps, projectRoot: process.cwd() });
-      yield* harness(
-        m.context,
-        m.uiChannel as EventBus<WorkflowEvent>,
-        m.commands as Signal<Command, void>,
-      );
-    },
+      }),
+    );
+  }
+
+  // The live config the harness reads via RunnerCtx (built into a per-session
+  // Runner inside runServedSession). Every Session's context is created over the
+  // one resident model; the reranker (if any) is loaded per-session by
+  // provisionAppModels from this resolved path.
+  const cfg: Config = {
+    version: 1,
+    sources: {},
+    apps: {},
+    model: { path: modelPath, reranker: rerankerPath, nCtx: llm.context ?? 32768 },
   };
 
-  const host = yield* createModelRuntimeHost<SessionContext>({
-    served,
+  // Hand the harness to the host through the driver. The host is payload-opaque
+  // (bus/command types erased to `unknown`); the harness created them as
+  // WorkflowEvent/Command, so re-narrow them inside `run`.
+  const driver = yield* createServedHostDriver(cfg, {
     maxNativeSessions: MAX_SESSIONS,
+    run: (m) =>
+      runServedSession(
+        cfg,
+        m.context,
+        m.uiChannel as unknown as EventBus<WorkflowEvent>,
+        m.commands as unknown as Signal<Command, void>,
+      ),
   });
 
   const server = new WebSocketServer({ port: PORT, host: HOST });
-  server.on("error", (err: Error) => {
-    process.stderr.write(`\nserve: ws server error — ${err.message}\n`);
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    process.stderr.write(`\nserve: failed to bind ${HOST}:${PORT} — ${err.code ?? err.message}\n`);
     process.exit(1);
   });
   server.on("connection", (socket) => {
-    socket.on("error", () => {});
-    const sessionId = randomUUID();
-    try {
-      const uiChannel = createBus<WorkflowEvent>();
-      const commands = createSignal<Command, void>();
-      pending.set(sessionId, { uiChannel, commands });
-      // Bind the socket NOW — events buffer on the bus until the harness subscribes.
-      const postSession = wss<WorkflowEvent, Command>(socket as unknown as WsServerSocket, {
-        uiChannel,
-        dispatch: (c) => commands.send(c),
-        bootstrap: [],
-        sessionId,
-      });
-      // Disconnect at any phase → release (queued=drop, warming=discard, live=halt).
-      socket.on("close", () => {
-        host.release(sessionId).catch(() => {});
-        pending.delete(sessionId);
-      });
-      host.admit({
-        sessionId,
-        onState: (s: SessionState) => {
-          postSession(s);
-          if (s.phase === "reaped" || s.phase === "died") pending.delete(sessionId);
-        },
-      });
-    } catch (err) {
-      // Contain a synchronous setup failure to THIS connection — never take the
-      // whole host down with it.
-      pending.delete(sessionId);
-      host.release(sessionId).catch(() => {});
-      (socket as { close?: () => void }).close?.();
-      process.stderr.write(`serve: connection setup failed — ${String(err)}\n`);
-    }
+    // The driver installs the socket's no-op 'error' handler itself (an unhandled
+    // 'error' on a Node EventEmitter throws), so the boot just hands the socket off.
+    driver.serveConnection(socket as unknown as WsServerSocket);
   });
   process.stderr.write(
     `\n__NAME__ serving on ws://${HOST}:${PORT} — up to ${MAX_SESSIONS} browser session(s) over one resident model.\n`,
