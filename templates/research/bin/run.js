@@ -65,7 +65,7 @@ function installLines(pkg) {
   const apps = pkg.harnessdev?.apps;
   const specs = Array.isArray(apps) ? apps.filter((a) => typeof a === "string") : [];
   return (specs.length ? specs : ["<publisher>/<name>"]).map(
-    (spec) => `  npx lloyal install ${spec}`,
+    (spec) => `  npx lloyal-cli install ${spec}`,
   );
 }
 

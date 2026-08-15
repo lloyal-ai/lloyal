@@ -107,8 +107,8 @@ describe('new — default apps are vendored regardless of TTY / --skip-install',
     expect(vendorMock).not.toHaveBeenCalled();
     // The specs are still recorded, so `bin/run.js` can name them at boot.
     expect(marker(dir).apps).toEqual(DEFAULT_APPS.research);
-    expect(stdout).toContain('npx lloyal install lloyal/corpus@1.3.0');
-    expect(stdout).toContain('npx lloyal install lloyal/web@1.3.0');
+    expect(stdout).toContain('npx lloyal-cli install lloyal/corpus@1.3.0');
+    expect(stdout).toContain('npx lloyal-cli install lloyal/web@1.3.0');
     expect(stdout).toContain('will not typecheck or start');
   });
 
@@ -116,7 +116,7 @@ describe('new — default apps are vendored regardless of TTY / --skip-install',
     vendorMock.mockRejectedValue(new Error('getaddrinfo ENOTFOUND apps.lloyal.ai'));
     const dir = await scaffold('r4', ['--template', 'research']);
     expect(stderr).toContain('could not fetch default app lloyal/corpus@1.3.0');
-    expect(stdout).toContain('npx lloyal install lloyal/corpus@1.3.0');
+    expect(stdout).toContain('npx lloyal-cli install lloyal/corpus@1.3.0');
     expect(marker(dir).template).toBe('research'); // the scaffold itself survived
   });
 });
@@ -129,7 +129,7 @@ describe('printNextSteps — pending apps come BEFORE the run commands', () => {
       installed: false,
       pendingApps: ['lloyal/corpus@1.3.0'],
     });
-    const required = stdout.indexOf('npx lloyal install lloyal/corpus@1.3.0');
+    const required = stdout.indexOf('npx lloyal-cli install lloyal/corpus@1.3.0');
     const runIt = stdout.indexOf('Run it');
     expect(required).toBeGreaterThan(-1);
     expect(runIt).toBeGreaterThan(-1);

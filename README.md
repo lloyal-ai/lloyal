@@ -5,7 +5,7 @@
 `lloyal` is the CLI for the [HDK](https://github.com/lloyal-ai/hdk). It scaffolds a **harness** — a runnable vertical-inference app in ordinary TypeScript — and runs it on a model **you own**: resident in your process on a laptop, or served from your own GPU host. Every agent scaffold starts with `API_KEY=`; a harness starts with a model.
 
 ```bash
-npx lloyal new              # interactive: name → surfaces → model → template
+npx lloyal-cli new              # interactive: name → surfaces → model → template
 cd my-harness && npm install && npm start
 ```
 
@@ -59,10 +59,10 @@ Grammar: one bare verb for the primary artifact (`new`); `<noun>:<verb>` namespa
 **Scaffold**
 
 ```bash
-npx lloyal new [name]                       # scaffold a harness (interactive if no name)
-npx lloyal new my-app --template research   # a production research harness: recon, planning,
+npx lloyal-cli new [name]                       # scaffold a harness (interactive if no name)
+npx lloyal-cli new my-app --template research   # a production research harness: recon, planning,
                                                  #   parallel investigation, evidence admission, synthesis
-npx lloyal app:new <name>                   # scaffold an App (a portable capability package)
+npx lloyal-cli app:new <name>                   # scaffold an App (a portable capability package)
 ```
 
 `new` flags (any also pre-seed the picker): `--targets cli,desktop,web` · `--model <id|path>` · `--template <basic|research>` · `--yes` (CI) · `--dir <path>`.
@@ -72,14 +72,14 @@ Two more, for controlling what `new` does after it writes the tree: `--skip-inst
 **Manage a scaffolded project** (run from its root)
 
 ```bash
-npx lloyal models:use <id>                  # pin a catalog model (downloaded + verified next run)
-npx lloyal models:add <path>                # register a local .gguf you already have
-npx lloyal models:download <url> [--sha256 <hex>]  # stream a .gguf into models/<role>/
-npx lloyal models:list                      # catalog ids · active pins · installed files
+npx lloyal-cli models:use <id>                  # pin a catalog model (downloaded + verified next run)
+npx lloyal-cli models:add <path>                # register a local .gguf you already have
+npx lloyal-cli models:download <url> [--sha256 <hex>]  # stream a .gguf into models/<role>/
+npx lloyal-cli models:list                      # catalog ids · active pins · installed files
 
-npx lloyal targets:add <desktop|web>        # bind the same harness to another surface
-npx lloyal targets:remove <desktop|web>     # drop a surface
-npx lloyal targets:list                     # show the surfaces present
+npx lloyal-cli targets:add <desktop|web>        # bind the same harness to another surface
+npx lloyal-cli targets:remove <desktop|web>     # drop a surface
+npx lloyal-cli targets:list                     # show the surfaces present
 ```
 
 The `models:` verbs own the write to `harness.yml`'s `model.<role>.{id|path}`, so the manifest is never hand-edited. A catalog `id` is downloaded + digest-verified fail-closed; a `path` is a local weight you point at, trusted explicitly.
@@ -89,7 +89,7 @@ The `models:` verbs own the write to `harness.yml`'s `model.<role>.{id|path}`, s
 An **AgentApp** — an **App** in commands and code — is a portable capability package: a protocol, tools, skills, config and grants a harness can enable.
 
 ```bash
-npx lloyal install <publisher>/<name>       # install a signed App from apps.lloyal.ai
+npx lloyal-cli install <publisher>/<name>       # install a signed App from apps.lloyal.ai
 ```
 
 Every install is verified before it runs:
@@ -104,10 +104,10 @@ Every install is verified before it runs:
 **Publishers**
 
 ```bash
-npx lloyal publishers register              # claim your publisher handle
-npx lloyal publish                          # build, sign, and submit your App
-npx lloyal publish status <id>              # check a submission
-npx lloyal review                           # (reviewers) inspect + approve submissions
+npx lloyal-cli publishers register              # claim your publisher handle
+npx lloyal-cli publish                          # build, sign, and submit your App
+npx lloyal-cli publish status <id>              # check a submission
+npx lloyal-cli review                           # (reviewers) inspect + approve submissions
 ```
 
 ## Where it sits

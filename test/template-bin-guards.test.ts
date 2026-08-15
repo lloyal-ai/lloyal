@@ -61,7 +61,7 @@ describe('preflight-apps.js', () => {
     });
     const { status, stderr } = run(dir, 'preflight-apps.js');
     expect(status).toBe(1);
-    expect(stderr).toContain(`npx lloyal install ${WIKIPEDIA}`);
+    expect(stderr).toContain(`npx lloyal-cli install ${WIKIPEDIA}`);
   });
 
   it('passes when a dependency points at the spec’s vendored tarball', () => {
@@ -87,7 +87,7 @@ describe('preflight-apps.js', () => {
     });
     const { status, stderr } = run(dir, 'preflight-apps.js');
     expect(status).toBe(1);
-    expect(stderr).toContain('npx lloyal install lloyal/web@1.3.0');
+    expect(stderr).toContain('npx lloyal-cli install lloyal/web@1.3.0');
     expect(stderr).not.toContain('lloyal/corpus@1.3.0');
   });
 
@@ -131,7 +131,7 @@ describe('run.js — classifies ERR_MODULE_NOT_FOUND before advising', () => {
     const { status, stderr } = run(dir, 'run.js');
     expect(status).toBe(1);
     expect(stderr).toContain('is not a dependency of this project');
-    expect(stderr).toContain(`npx lloyal install ${WIKIPEDIA}`);
+    expect(stderr).toContain(`npx lloyal-cli install ${WIKIPEDIA}`);
   });
 
   it('a bare specifier that IS a dependency means npm install, not install-app', () => {

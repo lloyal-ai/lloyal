@@ -8,7 +8,7 @@ const USAGE = [
   'lloyal app:new — scaffold a new HDK app',
   '',
   'Usage:',
-  '  npx lloyal app:new <name> [--dir <path>] [--publisher <handle>]',
+  '  lloyal app:new <name> [--dir <path>] [--publisher <handle>]',
   '',
   'Arguments:',
   '  <name>              App name (lowercase, [a-z][a-z0-9_-]{1,63}) — also the',

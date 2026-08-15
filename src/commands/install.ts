@@ -15,7 +15,7 @@ const USAGE = [
   'lloyal install — install a signed HDK app from apps.lloyal.ai into the current project',
   '',
   'Usage:',
-  '  npx lloyal install [--allow-scripts] <publisher>/<name>[@<semver>]',
+  '  lloyal install [--allow-scripts] <publisher>/<name>[@<semver>]',
   '',
   'Examples:',
   '  lloyal install lloyal/web',

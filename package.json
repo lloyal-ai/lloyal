@@ -1,5 +1,5 @@
 {
-  "name": "lloyal",
+  "name": "lloyal-cli",
   "version": "0.11.0",
   "description": "The Harness Development Kit CLI — scaffold HDK harnesses and apps.",
   "bin": {

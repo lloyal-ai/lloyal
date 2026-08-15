@@ -43,7 +43,7 @@ const ADD_USAGE = [
   'lloyal targets:add — add a run surface to the current project',
   '',
   'Usage:',
-  '  npx lloyal targets:add <desktop|web>',
+  '  lloyal targets:add <desktop|web>',
   '',
   'Copies the surface (dir + build config + deps + tsconfig entries) back from the',
   'template this project was scaffolded from. The reverse of removing it.',
@@ -91,7 +91,7 @@ const REMOVE_USAGE = [
   'lloyal targets:remove — remove a run surface from the current project',
   '',
   'Usage:',
-  '  npx lloyal targets:remove <desktop|web> [--yes]',
+  '  lloyal targets:remove <desktop|web> [--yes]',
   '',
   'Deletes the surface dir + its scripts/deps/tsconfig entries. Destructive —',
   'prompts for confirmation (pass --yes to skip, required in a non-interactive shell).',
@@ -144,7 +144,7 @@ const LIST_USAGE = [
   'lloyal targets:list — show the run surfaces present in the current project',
   '',
   'Usage:',
-  '  npx lloyal targets:list',
+  '  lloyal targets:list',
 ].join('\n');
 
 export const targetsListCommand: Command = {

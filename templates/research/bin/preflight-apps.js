@@ -50,7 +50,7 @@ if (missing.length) {
   process.stderr.write(
     `\nThis harness imports ${plural ? "AgentApps that are" : "an AgentApp that is"} not installed.\n` +
       "Fetch the signed (Ed25519-verified) bundles, then try again:\n\n" +
-      `${missing.map((spec) => `  npx lloyal install ${spec}`).join("\n")}\n\n`,
+      `${missing.map((spec) => `  npx lloyal-cli install ${spec}`).join("\n")}\n\n`,
   );
   process.exit(1);
 }

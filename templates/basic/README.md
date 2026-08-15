@@ -38,7 +38,7 @@ Everything under `targets/` is convention handled for you — the boot mounts a 
 ## Add capabilities
 
 ```sh
-npx lloyal install <publisher>/<name>   # a signed AgentApp from apps.lloyal.ai
+npx lloyal-cli install <publisher>/<name>   # a signed AgentApp from apps.lloyal.ai
 ```
 
 Enable it in `harness/harness.ts` alongside `createWikipediaApp`.
@@ -47,4 +47,4 @@ Apps are **Ed25519-verified and vendored locally** — `lloyal` fetches the
 signed tarball, checks its signature, and writes it to `vendor/` with a `file:`
 dependency (never a remote-URL install). Commit `vendor/` so `npm ci` reproduces
 the exact bytes offline. If you scaffolded with `--skip-install`, fetch the
-default app with `npx lloyal install lloyal/wikipedia` before the first run.
+default app with `npx lloyal-cli install lloyal/wikipedia` before the first run.

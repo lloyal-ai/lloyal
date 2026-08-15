@@ -51,7 +51,7 @@ const USE_USAGE = [
   'lloyal models:use — pin a catalog model by id',
   '',
   'Usage:',
-  '  npx lloyal models:use <id> [--role llm|reranker]',
+  '  lloyal models:use <id> [--role llm|reranker]',
   '',
   'Writes `model.<role>.id` in harness.yml. The model is fetched + digest-verified',
   'from the catalog on the next run (no API key). For a local .gguf you already',
@@ -99,7 +99,7 @@ const ADD_USAGE = [
   'lloyal models:add — register a local .gguf you already have',
   '',
   'Usage:',
-  '  npx lloyal models:add <path> [--role llm|reranker]',
+  '  lloyal models:add <path> [--role llm|reranker]',
   '',
   'Writes `model.<role>.path` in harness.yml. The file is trusted by possession',
   '(not catalog-digest-verified). Relative paths resolve from the project root.',
@@ -145,7 +145,7 @@ const DOWNLOAD_USAGE = [
   'lloyal models:download — fetch a .gguf from a URL into models/<role>/',
   '',
   'Usage:',
-  '  npx lloyal models:download <url> [--role llm|reranker] [--sha256 <hex>]',
+  '  lloyal models:download <url> [--role llm|reranker] [--sha256 <hex>]',
   '',
   'Streams the weight to models/<role>/<file>.gguf and pins it as model.<role>.path.',
   'A URL download is TRUSTED BY SOURCE — pass --sha256 to verify the bytes',
@@ -209,7 +209,7 @@ const LIST_USAGE = [
   'lloyal models:list — show catalog ids, the active pins, and installed files',
   '',
   'Usage:',
-  '  npx lloyal models:list',
+  '  lloyal models:list',
 ].join('\n');
 
 export const modelsListCommand: Command = {

@@ -102,7 +102,7 @@ export function assertSharedViewLayout(projectDir: string): void {
     'this project predates lloyal 0.9 — its React view is still inside ' +
       '`targets/desktop/`, but the `targets:` verbs now expect `targets/_shared/`.\n' +
       '  0.9 moved the shared view so that removing desktop stops breaking the web build.\n' +
-      '  There is no migration path. Scaffold a fresh project with `npx lloyal new` ' +
+      '  There is no migration path. Scaffold a fresh project with `npx lloyal-cli new` ' +
       'and copy your `harness/` (and your view) across.',
   );
 }
