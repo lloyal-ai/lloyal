@@ -15,14 +15,14 @@ const DEFAULT_PUBLISHERS_ME_ENDPOINT = `${API_BASE}/v1/publishers/me`;
 const DEFAULT_SUBMISSION_ENDPOINT_BASE = `${API_BASE}/v1/submissions`;
 
 const USAGE = [
-  'lloyal publish — submit an HDK app to apps.lloyal.ai for review + signing',
+  'lloyal publish — submit an HDK ability to apps.lloyal.ai for review + signing',
   '',
   'Usage:',
   '  lloyal publish [--dir <path>] [--endpoint <url>]',
   '  lloyal publish status <submissionId>',
   '',
   'Options:',
-  '  --dir <path>      App directory (default: cwd)',
+  '  --dir <path>      Ability directory (default: cwd)',
   '  --endpoint <url>  Override the publish endpoint (default: ' + DEFAULT_PUBLISH_ENDPOINT + ')',
   '  -h, --help        Show this help',
   '',
@@ -30,11 +30,11 @@ const USAGE = [
   '  1. Look up the authenticated publisher via GET /v1/publishers/me to obtain',
   '     the registered handle. If no record exists, the CLI errors with a pointer',
   '     to `lloyal publishers register`.',
-  '  2. Read app.json + package.json. The catalog `name` is built as',
-  '     `<publisher-handle>/<app.json.name>` (auto-prefixed); the npm package',
-  '     name from package.json flows through as `importName`. If app.json already',
+  '  2. Read ability.json + package.json. The catalog `name` is built as',
+  '     `<publisher-handle>/<ability.json.name>` (auto-prefixed); the npm package',
+  '     name from package.json flows through as `importName`. If ability.json already',
   '     carries a scoped name, the publisher prefix must match.',
-  '  3. Run `npm pack` in the app directory.',
+  '  3. Run `npm pack` in the ability directory.',
   '  4. POST the .tgz bytes + manifest stub to the publish endpoint. The submission',
   '     enters the quarantine queue (status `pending`) — Lloyal review approves or',
   '     rejects; only on approval does the artifact get signed + cataloged.',
@@ -92,7 +92,7 @@ const UNSCOPED_NAME_PATTERN = /^[a-z][a-z0-9_-]{1,63}$/;
 
 export const publishCommand: Command = {
   name: 'publish',
-  summary: 'Submit an HDK app to apps.lloyal.ai for review + signing',
+  summary: 'Submit an HDK ability to apps.lloyal.ai for review + signing',
   usage: USAGE,
   async run(argv) {
     // `publish status <id>` is a sub-verb; it has different argv shape.
@@ -115,29 +115,29 @@ export const publishCommand: Command = {
       return 0;
     }
 
-    const appDir = resolve(values.dir ?? process.cwd());
+    const abilityDir = resolve(values.dir ?? process.cwd());
     const endpoint = values.endpoint ?? DEFAULT_PUBLISH_ENDPOINT;
 
-    // Read app.json for protocol metadata + manifest name/version.
-    let appJson: AppJson;
+    // Read ability.json for protocol metadata + manifest name/version.
+    let abilityJson: AppJson;
     try {
-      const raw = await readFile(join(appDir, 'app.json'), 'utf-8');
-      appJson = JSON.parse(raw) as AppJson;
+      const raw = await readFile(join(abilityDir, 'ability.json'), 'utf-8');
+      abilityJson = JSON.parse(raw) as AppJson;
     } catch (err) {
-      process.stderr.write(`lloyal publish: cannot read ${join(appDir, 'app.json')}: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal publish: cannot read ${join(abilityDir, 'ability.json')}: ${asMessage(err)}\n`);
       return 1;
     }
 
-    if (typeof appJson.name !== 'string') {
-      process.stderr.write(`lloyal publish: app.json "name" is not a string\n`);
+    if (typeof abilityJson.name !== 'string') {
+      process.stderr.write(`lloyal publish: ability.json "name" is not a string\n`);
       return 1;
     }
     if (
-      !SCOPED_NAME_PATTERN.test(appJson.name) &&
-      !UNSCOPED_NAME_PATTERN.test(appJson.name)
+      !SCOPED_NAME_PATTERN.test(abilityJson.name) &&
+      !UNSCOPED_NAME_PATTERN.test(abilityJson.name)
     ) {
       process.stderr.write(
-        `lloyal publish: invalid app.json "name" — expected ` +
+        `lloyal publish: invalid ability.json "name" — expected ` +
           '`<short-name>` or `<publisher>/<short-name>` matching `[a-z][a-z0-9_-]{1,63}`.\n',
       );
       return 1;
@@ -149,10 +149,10 @@ export const publishCommand: Command = {
     // npm identifier the consumer `import`s from (`importName`).
     let packageJson: PackageJson;
     try {
-      const raw = await readFile(join(appDir, 'package.json'), 'utf-8');
+      const raw = await readFile(join(abilityDir, 'package.json'), 'utf-8');
       packageJson = JSON.parse(raw) as PackageJson;
     } catch (err) {
-      process.stderr.write(`lloyal publish: cannot read ${join(appDir, 'package.json')}: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal publish: cannot read ${join(abilityDir, 'package.json')}: ${asMessage(err)}\n`);
       return 1;
     }
     if (typeof packageJson.name !== 'string' || packageJson.name.length === 0) {
@@ -192,26 +192,26 @@ export const publishCommand: Command = {
     }
 
     // Build the catalog `name`: scoped form `<handle>/<short>`. If
-    // app.json already carries a scoped name, the publisher prefix
+    // ability.json already carries a scoped name, the publisher prefix
     // must match — we won't silently rewrite to a different handle.
-    const scopedNameMatch = appJson.name.match(SCOPED_NAME_PATTERN);
+    const scopedNameMatch = abilityJson.name.match(SCOPED_NAME_PATTERN);
     let catalogName: string;
     if (scopedNameMatch) {
       if (scopedNameMatch[1] !== publisherHandle) {
         process.stderr.write(
-          `lloyal publish: app.json "name" is scoped under "${scopedNameMatch[1]}" ` +
-            `but you're registered as "${publisherHandle}". Either change app.json ` +
+          `lloyal publish: ability.json "name" is scoped under "${scopedNameMatch[1]}" ` +
+            `but you're registered as "${publisherHandle}". Either change ability.json ` +
             `to "${publisherHandle}/${scopedNameMatch[2]}" or drop the prefix.\n`,
         );
         return 1;
       }
-      catalogName = appJson.name;
+      catalogName = abilityJson.name;
     } else {
-      catalogName = `${publisherHandle}/${appJson.name}`;
+      catalogName = `${publisherHandle}/${abilityJson.name}`;
     }
 
-    // Serialize the app's ATTENTION SURFACE (skill prose + full tool schemas +
-    // useWhen + configSchema) into `attention-surface.json` in the app dir, so
+    // Serialize the ability's ATTENTION SURFACE (skill prose + full tool schemas +
+    // useWhen + configSchema) into `attention-surface.json` in the ability dir, so
     // `npm pack` includes it and it's covered by the signed tarball.
     //
     // The file is a GENERATED artifact, but a publisher may already have one in
@@ -221,7 +221,7 @@ export const publishCommand: Command = {
     // and the pack block's `finally`) — restore the original if one existed,
     // otherwise remove only the file we created. (The PUBLISHED surface is
     // always the freshly-generated one; we just never destroy the publisher's.)
-    const surfacePath = join(appDir, 'attention-surface.json');
+    const surfacePath = join(abilityDir, 'attention-surface.json');
     let existingSurface: string | undefined;
     try {
       existingSurface = await readFile(surfacePath, 'utf-8');
@@ -247,7 +247,7 @@ export const publishCommand: Command = {
       }
     };
     try {
-      const surface = await buildAttentionSurface(appDir, appJson, packageJson);
+      const surface = await buildAttentionSurface(abilityDir, abilityJson, packageJson);
       await writeFile(surfacePath, `${JSON.stringify(surface, null, 2)}\n`);
     } catch (err) {
       process.stderr.write(`lloyal publish: could not build attention surface: ${asMessage(err)}\n`);
@@ -264,7 +264,7 @@ export const publishCommand: Command = {
     let tarball: Uint8Array;
     try {
       packTmpDir = await mkdtemp(join(tmpdir(), 'harness-dev-publish-'));
-      const tarballPath = await npmPack(appDir, packTmpDir);
+      const tarballPath = await npmPack(abilityDir, packTmpDir);
       tarball = new Uint8Array(await readFile(tarballPath));
     } catch (err) {
       process.stderr.write(`lloyal publish: npm pack failed: ${asMessage(err)}\n`);
@@ -444,18 +444,18 @@ async function lookupPublisherHandle(
 }
 
 /**
- * Run `npm pack --pack-destination <packTmpDir>` in `appDir`. Returns the
+ * Run `npm pack --pack-destination <packTmpDir>` in `abilityDir`. Returns the
  * absolute path to the produced `.tgz`. Uses `child_process.spawn` rather
  * than the npm programmatic API so the CLI doesn't take a hard dependency
  * on a specific npm internal — the user's `npm` (whatever's in PATH) does
  * the packing.
  */
-async function npmPack(appDir: string, packTmpDir: string): Promise<string> {
+async function npmPack(abilityDir: string, packTmpDir: string): Promise<string> {
   return new Promise<string>((resolvePromise, reject) => {
     const proc = spawn(
       'npm',
       ['pack', '--pack-destination', packTmpDir, '--json'],
-      { cwd: appDir, stdio: ['ignore', 'pipe', 'pipe'] },
+      { cwd: abilityDir, stdio: ['ignore', 'pipe', 'pipe'] },
     );
     let stdout = '';
     let stderr = '';

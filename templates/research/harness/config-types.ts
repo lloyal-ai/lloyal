@@ -12,16 +12,16 @@
 export interface ConfigSources {
   /** Where per-query run-dirs (report.md + annexure-N.md) and the session
    *  trace.jsonl get written. Default = process.cwd() at boot. This is
-   *  harness config — NOT a per-app config object. */
+   *  harness config — NOT a per-ability config object. */
   outputDir?: string;
 }
 
-/** Per-app stored config, keyed by `manifest.name` → the app's config object
- *  (whatever the app's `configSchema` declares; e.g. `{ corpusPath }`,
+/** Per-ability stored config, keyed by `manifest.name` → the ability's config object
+ *  (whatever the ability's `configSchema` declares; e.g. `{ corpusPath }`,
  *  `{ tavilyKey }`). The harness never reads inside these objects — it
- *  whole-replaces an app's entry and hands it to the registry, which
- *  validates against the app's `configSchema` on enable. Secrets (e.g.
- *  `tavilyKey`) live here verbatim; env-provided secrets win at the app
+ *  whole-replaces an ability's entry and hands it to the registry, which
+ *  validates against the ability's `configSchema` on enable. Secrets (e.g.
+ *  `tavilyKey`) live here verbatim; env-provided secrets win at the ability
  *  factory and are never written back. */
 export type ConfigApps = Record<string, Record<string, unknown>>;
 
@@ -70,17 +70,17 @@ export interface ConfigModel {
 export interface Config {
   version: 1;
   sources: ConfigSources;
-  /** Per-app stored config, keyed by `manifest.name`. The harness seeds
+  /** Per-ability stored config, keyed by `manifest.name`. The harness seeds
    *  `configStore` from this on boot (loop over entries) and whole-replaces
-   *  an app's entry on `set_app_config`. Persisted under `apps[name]`. */
-  apps: ConfigApps;
+   *  an ability's entry on `set_app_config`. Persisted under `abilities[name]`. */
+  abilities: ConfigApps;
   defaults: ConfigDefaults;
   model: ConfigModel;
 }
 
 /** Which layer supplied a given harness-level field — used for composer UI
- *  hints. Per-app config lives in `Config.apps` and carries no origin
- *  tracking (apps validate their own config at enable time). */
+ *  hints. Per-ability config lives in `Config.abilities` and carries no origin
+ *  tracking (abilities validate their own config at enable time). */
 export interface ConfigOrigin {
   reasoningMode: 'cli' | 'file' | 'default';
   modelPath: 'cli' | 'file' | 'default';

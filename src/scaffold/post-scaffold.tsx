@@ -117,12 +117,12 @@ export function printNextSteps(opts: {
   targets: Target[];
   installed: boolean;
   /**
-   * Default app specs that were NOT vendored (`--skip-apps`, or the fetch
+   * Default ability specs that were NOT vendored (`--skip-abilities`, or the fetch
    * failed). The harness imports these, so until they are added the project
    * neither typechecks nor boots — they are printed FIRST, as a required step,
    * ahead of the run commands they gate.
    */
-  pendingApps?: string[];
+  pendingAbilities?: string[];
 }): void {
   const tty = Boolean(process.stdout.isTTY);
   const c = (code: string, s: string): string => (tty ? `\x1b[${code}m${s}\x1b[0m` : s);
@@ -130,7 +130,7 @@ export function printNextSteps(opts: {
   const dim = (s: string): string => c('2', s);
   const bold = (s: string): string => c('1', s);
 
-  const pending = opts.pendingApps ?? [];
+  const pending = opts.pendingAbilities ?? [];
   const ready = pending.length === 0;
 
   const lines: string[] = [
@@ -142,13 +142,13 @@ export function printNextSteps(opts: {
   ];
   lines.push(`  ${dim(`cd ${opts.name}`)}`);
   if (pending.length) {
-    // The harness imports these apps at the top level, so `npm start` and
+    // The harness imports these abilities at the top level, so `npm start` and
     // `npm run typecheck` both FAIL until they are fetched + Ed25519-verified.
     // That makes this a prerequisite, not an optional extra — it goes above the
     // run commands, and it runs `npm install` for you.
     lines.push(
       '',
-      `  ${c(`${ACCENT_SGR};1`, `Required — this harness imports ${pending.length > 1 ? 'these apps' : 'this app'}:`)}`,
+      `  ${c(`${ACCENT_SGR};1`, `Required — this harness imports ${pending.length > 1 ? 'these abilities' : 'this ability'}:`)}`,
     );
     for (const spec of pending) lines.push(`    ${amber(`npx lloyal-ai install ${spec}`)}`);
     lines.push(`  ${dim('Until then the project will not typecheck or start.')}`);
@@ -163,7 +163,7 @@ export function printNextSteps(opts: {
   }
   lines.push('');
   lines.push(`  ${dim('First run fetches + digest-verifies the model — no API key.')}`);
-  lines.push(`  ${dim('Add apps:  npx lloyal-ai install <publisher>/<name>')}`);
+  lines.push(`  ${dim('Add abilities:  npx lloyal-ai install <publisher>/<name>')}`);
   lines.push('');
   process.stdout.write(`${lines.join('\n')}\n`);
 }

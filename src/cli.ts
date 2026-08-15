@@ -3,7 +3,7 @@
  * `lloyal` — the Harness Development Kit CLI.
  *
  * Thin dispatcher. The first token selects a command by name (`new`,
- * `app:new`, `install`, …); an unknown token is an ERROR, never a silent
+ * `ability:new`, `install`, …); an unknown token is an ERROR, never a silent
  * scaffold. Scaffolding a harness is the explicit `new` verb.
  * Global `--help` / `--version` are handled here; all other flag parsing
  * belongs to the individual command.
@@ -37,7 +37,7 @@ function printHelp(): void {
       'Scaffold:',
       '  lloyal new [name]           Scaffold a new harness (interactive if no name)',
       '  lloyal new --template research       Start from the tuned research template',
-      '  lloyal app:new <name>       Scaffold a new app',
+      '  lloyal ability:new <name>       Scaffold a new ability',
       '',
       'Manage models (in a project):',
       '  lloyal models:use <id> [--role llm|reranker]   Pin a catalog model',
@@ -50,9 +50,9 @@ function printHelp(): void {
       '  lloyal targets:remove <desktop|web>   Remove a surface',
       '  lloyal targets:list         Show the surfaces present',
       '',
-      'Apps + channel:',
-      '  lloyal install <pub>/<name>[@<semver>]   Install a signed app from apps.lloyal.ai',
-      '  lloyal publish              Submit an app for review + signing',
+      'Abilities + channel:',
+      '  lloyal install <pub>/<name>[@<semver>]   Install a signed ability from apps.lloyal.ai',
+      '  lloyal publish              Submit an ability for review + signing',
       '  lloyal publish status <id>  Check the status of a submission',
       '  lloyal publishers register  Claim a publisher handle + attest ToS',
       '  lloyal publishers me        Show your publisher record',

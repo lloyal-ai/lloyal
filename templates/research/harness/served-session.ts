@@ -10,19 +10,19 @@
 import type { Operation, Signal } from "effection";
 import type { SessionContext } from "@lloyal-labs/sdk";
 import type { EventBus } from "@lloyal-labs/binding";
-import { provisionAppModels } from "@lloyal-labs/rig/node";
-import { harness, apps } from "./harness.js";
+import { provisionAbilityModels } from "@lloyal-labs/rig/node";
+import { harness, abilities } from "./harness.js";
 import { RunnerCtx } from "./runner-ctx.js";
 import { applyServedGpuEnv, makeServedRunner } from "./served-runtime.js";
 import type { WorkflowEvent, Command } from "./protocol.js";
 import type { Config } from "./config-types.js";
 
 /**
- * Run ONE served Session end to end: provision its per-session reranker + app
+ * Run ONE served Session end to end: provision its per-session reranker + ability
  * services (its OWN reranker KV context over the shared resident weights, so
  * tenant documents never cross the reranker context), build the served `Runner`,
  * publish it on `RunnerCtx`, and run the UNCHANGED `harness(...)` over this
- * Session. `provisionAppModels` reads the corpus/web apps' static
+ * Session. `provisionAbilityModels` reads the corpus/web abilities' static
  * `services: ['reranker']`, loads the reranker, and publishes it on `RerankerCtx`
  * in THIS scope — the scope `harness()` runs in, so `registry.enable` injects it.
  * The host `spawn`s this as the per-session child; its scope owns BOTH the
@@ -44,8 +44,8 @@ export function* runServedSession(
   commands: Signal<Command, void>,
 ): Operation<void> {
   applyServedGpuEnv(cfg);
-  yield* provisionAppModels({
-    apps,
+  yield* provisionAbilityModels({
+    abilities,
     projectRoot: process.cwd(),
     reranker: cfg.model.reranker ? { path: cfg.model.reranker } : undefined,
     // 10 leases (2 for trunk + queryBranch, 8 effective scoring leaves); nCtx

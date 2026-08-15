@@ -13,7 +13,7 @@ import { join } from 'node:path';
 /** A model entry is `id` XOR `path` — a catalog id or a BYO `.gguf` path. */
 export type ModelSpec = { id: string } | { path: string };
 
-/** The roles a harness provisions: the trunk llm + an app-declared reranker. */
+/** The roles a harness provisions: the trunk llm + an ability-declared reranker. */
 export type Role = 'llm' | 'reranker';
 
 export interface ModelChoice {

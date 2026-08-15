@@ -12,7 +12,7 @@ model:
   llm:
     id: "qwen3.5-4b"          # kvCache: q4_0 · gpu: auto · branches: from capacity
     context: 32768
-  # The corpus + web apps score retrievals with a reranker. It's resolved +
+  # The corpus + web abilities score retrievals with a reranker. It's resolved +
   # digest-verified into models/reranker/ on first run, then created per-boot.
   reranker:
     id: "qwen3-reranker-0.6b-q8"

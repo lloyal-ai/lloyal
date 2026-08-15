@@ -11,7 +11,7 @@
  * host materialises one `SessionContext` per admitted Session over one resident
  * model; lloyal.node's ModelRegistry weak-caches the model by path, so N Sessions
  * share the resident weights + each pays only its own KV. The reranker is NOT
- * built here — `provisionAppModels` (in the boot / `runServedSession`) loads it
+ * built here — `provisionAbilityModels` (in the boot / `runServedSession`) loads it
  * and publishes it on `RerankerCtx`.
  */
 import { createSignal } from "effection";
@@ -88,7 +88,7 @@ function mergeConfig(base: Config, patch: Partial<Config>): Config {
     ...patch,
     version: 1,
     sources,
-    apps: { ...base.apps, ...(patch.apps ?? {}) },
+    abilities: { ...base.abilities, ...(patch.abilities ?? {}) },
     model,
   };
 }
@@ -97,7 +97,7 @@ function mergeConfig(base: Config, patch: Partial<Config>): Config {
  * Build the served `Runner` for ONE Session. Everything here is per-session: its
  * OWN config clone (in-memory `saveConfig`), fresh wind-down / cancel signals, and
  * a null trace sink — so no runner state and no user data crosses between tenants.
- * The reranker is NOT a Runner concern: `runServedSession`'s `provisionAppModels`
+ * The reranker is NOT a Runner concern: `runServedSession`'s `provisionAbilityModels`
  * publishes a per-session reranker on `RerankerCtx`. `reloadRuntime` is a no-op:
  * the model is a fixed host residency, so a config change that would rebuild it
  * just ends that Session.
@@ -140,7 +140,7 @@ export function makeServedRunner(cfg: Config): Runner {
  * clone (so config edits survive within a session but not across restarts — a
  * cold path, fine for an austere CLI), `reloadRuntime` is a no-op (the boot owns
  * the `SessionContext` lifetime), a NullTraceWriter, no replay, `interactive`
- * mode. The reranker is NOT here: the boot's `provisionAppModels` publishes it on
+ * mode. The reranker is NOT here: the boot's `provisionAbilityModels` publishes it on
  * `RerankerCtx` before `harness` runs.
  */
 export function makeEdgeRunner(cfg: Config): Runner {

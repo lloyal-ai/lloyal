@@ -152,14 +152,14 @@ function View({
   bootstrap: WorkflowEvent[];
 }): React.ReactElement {
   const [state, apply] = useReducer(reduce, bootstrap, seed);
-  const app = useApp();
+  const ability = useApp();
 
   useEffect(() => bus.subscribe((ev) => apply(ev)), [bus]);
 
   useInput((input, key) => {
     if (key.ctrl && input === "c") {
       dispatch({ type: "quit" });
-      app.exit();
+      ability.exit();
     }
   });
 
@@ -219,12 +219,12 @@ function View({
         <Box flexDirection="column">
           <Text bold>{"__NAME__"}</Text>
           {/* Measured facts from the `ready` event — the model's real size + the
-              apps actually enabled, never a hardcoded string. */}
+              abilities actually enabled, never a hardcoded string. */}
           {state.boot ? (
             <>
               <Text color="gray">{`Model      ${state.boot.model.id} · ${formatSize(state.boot.model.sizeBytes)} · resident`}</Text>
               <Text color="gray">Inference  local · no provider</Text>
-              <Text color="gray">{`Apps       ${state.boot.apps.length ? state.boot.apps.join(", ") : "none installed"}`}</Text>
+              <Text color="gray">{`Abilities       ${state.boot.abilities.length ? state.boot.abilities.join(", ") : "none installed"}`}</Text>
               <Text color="gray">{`Surface    ${state.boot.surface}`}</Text>
             </>
           ) : (

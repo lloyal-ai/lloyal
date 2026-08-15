@@ -22,7 +22,7 @@ For research intent, the rules for the `tasks` array:
 
 5. **Right-sized.** Each task answerable in 3-5 search/fetch cycles. Not "Research X" (too broad) and not "Find the exact phrase Y" (too narrow).
 
-6. **Route each task to its source (when sources are listed).** If the context below lists knowledge sources, set each task's `app` to the source that holds it, using the source's EXACT name. Ground this in the `Source coverage` probe results when present (they show which source actually has each entity) — fall back to each source's stated purpose otherwise. If two facets clearly belong to different sources, that's a good orthogonal split. Keep the description itself about WHAT to find — don't write "search the web for…" or "in the corpus". (When no sources are listed, omit `app` and just describe the facet.)
+6. **Route each task to its source (when sources are listed).** If the context below lists knowledge sources, set each task's `<%= it.routingKey %>` to the source that holds it, using the source's EXACT name. Ground this in the `Source coverage` probe results when present (they show which source actually has each entity) — fall back to each source's stated purpose otherwise. If two facets clearly belong to different sources, that's a good orthogonal split. Keep the description itself about WHAT to find — don't write "search the web for…" or "in the corpus". (When no sources are listed, omit `<%= it.routingKey %>` and just describe the facet.)
 
 GOOD research plan for "How do modern cancer immunotherapies achieve durable remission?":
 
@@ -38,7 +38,7 @@ GOOD research plan for "How do modern cancer immunotherapies achieve durable rem
 }
 ```
 
-Notice that each task names its own scope and vocabulary directly. None reference another task. Each could run on its own agent and produce a standalone report. The harness fans in the four reports for synthesis. (Per-task `app` routing is omitted from this example — see rule 6 and the live `Source coverage` reports for routing decisions on your actual catalog.)
+Notice that each task names its own scope and vocabulary directly. None reference another task. Each could run on its own agent and produce a standalone report. The harness fans in the four reports for synthesis. (Per-task `<%= it.routingKey %>` routing is omitted from this example — see rule 6 and the live `Source coverage` reports for routing decisions on your actual catalog.)
 
 GOOD passthrough for a follow-up after the above research completed: "What did you mean by cytokine release syndrome in the trade-offs section?":
 

@@ -5,23 +5,23 @@ import { fileURLToPath } from 'node:url';
 import type { Command } from '../command.js';
 
 const USAGE = [
-  'lloyal app:new — scaffold a new HDK app',
+  'lloyal ability:new — scaffold a new HDK ability',
   '',
   'Usage:',
-  '  lloyal app:new <name> [--dir <path>] [--publisher <handle>]',
+  '  lloyal ability:new <name> [--dir <path>] [--publisher <handle>]',
   '',
   'Arguments:',
-  '  <name>              App name (lowercase, [a-z][a-z0-9_-]{1,63}) — also the',
+  '  <name>              Ability name (lowercase, [a-z][a-z0-9_-]{1,63}) — also the',
   '                      manifest `name` and the directory created for it.',
   '',
   'Options:',
-  '  --dir <path>        Parent directory to create the app in (default: cwd).',
+  '  --dir <path>        Parent directory to create the ability in (default: cwd).',
   '  --publisher <h>     Your publisher handle (default: "your-handle"). Used to',
   '                      seed the npm `name` field in package.json. You can edit',
   '                      it later before publishing.',
   '  -h, --help          Show this help.',
   '',
-  'Emits a working HDK app with search + fetch tools that call Wikipedia\'s',
+  'Emits a working HDK ability with search + fetch tools that call Wikipedia\'s',
   'public REST (no auth required), so `npm install && npm run build` and a',
   'register-in-harness smoke pass out of the box. Replace the tool bodies with',
   'your real backend; keep the schema + return shape so consumers stay',
@@ -29,12 +29,12 @@ const USAGE = [
 ].join('\n');
 
 // Pattern shared with `lloyal new`: identifier grammar that
-// satisfies App protocol + npm scoped-name conventions.
+// satisfies Ability protocol + npm scoped-name conventions.
 const NAME_RE = /^[a-z][a-z0-9_-]{1,63}$/;
 
 export const appCommand: Command = {
-  name: 'app:new',
-  summary: 'Scaffold a new HDK app',
+  name: 'ability:new',
+  summary: 'Scaffold a new HDK ability',
   usage: USAGE,
   async run(argv) {
     const { values, positionals } = parseArgs({
@@ -54,12 +54,12 @@ export const appCommand: Command = {
 
     const name = positionals[0];
     if (!name) {
-      process.stderr.write('lloyal app:new: missing <name>\n\n' + USAGE + '\n');
+      process.stderr.write('lloyal ability:new: missing <name>\n\n' + USAGE + '\n');
       return 1;
     }
     if (!NAME_RE.test(name)) {
       process.stderr.write(
-        `lloyal app:new: invalid <name> "${name}" — expected [a-z][a-z0-9_-]{1,63}.\n`,
+        `lloyal ability:new: invalid <name> "${name}" — expected [a-z][a-z0-9_-]{1,63}.\n`,
       );
       return 1;
     }
@@ -69,7 +69,7 @@ export const appCommand: Command = {
     const publisher = (values.publisher ?? 'your-handle').replace(/^@/, '');
     if (!NAME_RE.test(publisher)) {
       process.stderr.write(
-        `lloyal app:new: invalid --publisher "${publisher}" — expected [a-z][a-z0-9_-]{1,63}.\n`,
+        `lloyal ability:new: invalid --publisher "${publisher}" — expected [a-z][a-z0-9_-]{1,63}.\n`,
       );
       return 1;
     }
@@ -79,7 +79,7 @@ export const appCommand: Command = {
     try {
       if (statSync(dest).isDirectory()) {
         process.stderr.write(
-          `lloyal app:new: ${dest} already exists. Choose a different name or remove the directory first.\n`,
+          `lloyal ability:new: ${dest} already exists. Choose a different name or remove the directory first.\n`,
         );
         return 1;
       }
@@ -87,14 +87,14 @@ export const appCommand: Command = {
       // ENOENT — good, that's what we want
     }
 
-    const templateDir = resolveTemplateDir('app');
+    const templateDir = resolveTemplateDir('ability');
     const substitutions = buildSubstitutions(name, publisher);
 
     try {
       copyTreeWithSubstitutions(templateDir, dest, substitutions);
     } catch (err) {
       process.stderr.write(
-        `lloyal app:new: scaffold failed: ${err instanceof Error ? err.message : String(err)}\n`,
+        `lloyal ability:new: scaffold failed: ${err instanceof Error ? err.message : String(err)}\n`,
       );
       return 1;
     }
@@ -107,9 +107,9 @@ export const appCommand: Command = {
         '    npm run build\n' +
         '\n' +
         '  before publishing, edit:\n' +
-        '    app.json        — useWhen describes when an agent should pick your app\n' +
+        '    ability.json        — useWhen describes when an agent should pick your ability\n' +
         '    src/tools/      — replace the Wikipedia stubs with your real backend\n' +
-        '    package.json    — confirm the npm name (currently @' + publisher + '/' + name + '-app)\n',
+        '    package.json    — confirm the npm name (currently @' + publisher + '/' + name + '-ability)\n',
     );
     return 0;
   },
@@ -118,10 +118,10 @@ export const appCommand: Command = {
 /**
  * Resolve the templates directory by walking up from this module's
  * compiled location. After build, the CLI lives at
- * `<pkg-root>/dist/commands/app.js`, so the templates are at
+ * `<pkg-root>/dist/commands/ability.js`, so the templates are at
  * `<pkg-root>/templates/<kind>`.
  */
-function resolveTemplateDir(kind: 'app'): string {
+function resolveTemplateDir(kind: 'ability'): string {
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [
     resolve(here, '..', '..', 'templates', kind),
@@ -139,7 +139,7 @@ function resolveTemplateDir(kind: 'app'): string {
 
 /**
  * Build the placeholder → replacement map. Identifiers are derived from
- * the app name + the publisher handle so the scaffolded code is
+ * the ability name + the publisher handle so the scaffolded code is
  * immediately consistent without any post-rename pass.
  */
 function buildSubstitutions(name: string, publisher: string): Record<string, string> {

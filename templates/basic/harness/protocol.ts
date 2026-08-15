@@ -19,12 +19,12 @@ import type { AgentEvent } from "@lloyal-labs/lloyal-agents";
  * harness emits these on `ready`, so the header is identical in a terminal, an
  * Electron window, or a browser tab. (Tools' network-boundness + a trace path
  * are the next facts to surface — basic writes no trace and doesn't yet
- * introspect app entitlements, so it renders neither rather than a lie.)
+ * introspect ability entitlements, so it renders neither rather than a lie.)
  */
 export interface BootFacts {
   model: { id: string; sizeBytes: number };
   surface: string;
-  apps: string[];
+  abilities: string[];
 }
 
 export type WorkflowEvent =

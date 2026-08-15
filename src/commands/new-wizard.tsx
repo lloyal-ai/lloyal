@@ -169,11 +169,11 @@ function Banner(): ReactElement {
       <Box width="100%" justifyContent="space-between" marginTop={1}>
         <Box gap={2}>
           <GradientWord text="lloyal" bold />
-          <Text dimColor>rails new for agentic AI apps</Text>
+          <Text dimColor>rails new for agentic AI abilities</Text>
         </Box>
         <Text dimColor>v{VERSION}</Text>
       </Box>
-      <Text dimColor>the model lives inside your app — no API key</Text>
+      <Text dimColor>the model lives inside your ability — no API key</Text>
     </Box>
   );
 }
@@ -425,7 +425,7 @@ export function Wizard({
 
 /**
  * Mount the wizard and resolve with the collected answers, or `null` if the
- * user cancels (Ctrl-C / the Ink app exits before completing). Any `prefill`
+ * user cancels (Ctrl-C / the Ink ability exits before completing). Any `prefill`
  * (flags already provided) narrows the questions asked.
  */
 export function runNewWizard(prefill: WizardPrefill = {}): Promise<WizardResult | null> {

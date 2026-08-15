@@ -1,26 +1,26 @@
 #!/usr/bin/env node
 /**
- * Fail fast, naming the command that fixes it, when an AgentApp this harness
+ * Fail fast, naming the command that fixes it, when an Ability this harness
  * imports was never vendored.
  *
- * `harness/harness.ts` imports its apps at the top level, so a scaffold made
- * with `--skip-apps` — or one whose fetch failed — cannot typecheck. Without
+ * `harness/harness.ts` imports its abilities at the top level, so a scaffold made
+ * with `--skip-abilities` — or one whose fetch failed — cannot typecheck. Without
  * this guard `npm start` dies inside `tsc` with a bare TS2307: the compiler
  * complaining about a supply problem. Running ahead of the compiler puts the
  * `lloyal install` line in front of the user instead.
  *
  * Both truth sources are in package.json, and the CLI writes both:
  *
- *   harnessdev.apps        the install specs `lloyal new` recorded
+ *   harnessdev.abilities        the install specs `lloyal new` recorded
  *   dependencies[<name>]   `file:vendor/<publisher>__<name>-<version>.tgz`,
- *                          written by verifyAndVendorApp → setFileDependency
- *                          (harness-cli/src/scaffold/vendor-app.ts)
+ *                          written by verifyAndVendorAbility → setFileDependency
+ *                          (harness-cli/src/scaffold/vendor-ability.ts)
  *
  * A spec is satisfied when some dependency points at its vendored tarball. That
  * `vendor/<flat>-<version>.tgz` shape is the ONE thing this script assumes about
- * the CLI — keep it in sync with vendor-app.ts if it ever changes.
+ * the CLI — keep it in sync with vendor-ability.ts if it ever changes.
  *
- * Deliberately narrow: this checks only that the apps were VENDORED. "Vendored
+ * Deliberately narrow: this checks only that the abilities were VENDORED. "Vendored
  * but never npm-installed" is left to `bin/run.js`, which sees the real
  * resolution failure and so cannot guess wrong about it.
  */
@@ -29,7 +29,7 @@ import { readFileSync } from "node:fs";
 const pkg = readPkg();
 const specs = recordedSpecs(pkg);
 
-// An absent/empty `apps` marker means UNKNOWN, never "none" (see the contract in
+// An absent/empty `abilities` marker means UNKNOWN, never "none" (see the contract in
 // harness-cli/src/scaffold/write-marker.ts). Blocking here would break any
 // project that predates the marker or was written by hand.
 if (specs.length === 0) process.exit(0);
@@ -48,7 +48,7 @@ const missing = specs.filter((spec) => {
 if (missing.length) {
   const plural = missing.length > 1;
   process.stderr.write(
-    `\nThis harness imports ${plural ? "AgentApps that are" : "an AgentApp that is"} not installed.\n` +
+    `\nThis harness imports ${plural ? "Abilities that are" : "an Ability that is"} not installed.\n` +
       "Fetch the signed (Ed25519-verified) bundles, then try again:\n\n" +
       `${missing.map((spec) => `  npx lloyal-ai install ${spec}`).join("\n")}\n\n`,
   );
@@ -57,8 +57,8 @@ if (missing.length) {
 
 /** The `lloyal install` specs `lloyal new` recorded for this project. */
 function recordedSpecs(pkg) {
-  const apps = pkg.harnessdev?.apps;
-  return Array.isArray(apps) ? apps.filter((a) => typeof a === "string") : [];
+  const abilities = pkg.harnessdev?.abilities;
+  return Array.isArray(abilities) ? abilities.filter((a) => typeof a === "string") : [];
 }
 
 /** `lloyal/web@1.3.0` → `file:vendor/lloyal__web-1.3.0.tgz`. */

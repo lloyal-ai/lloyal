@@ -5,7 +5,7 @@
  * roots and the signed shapes all live in `@lloyal-labs/channel-verify`, an
  * Apache-2.0 package with zero runtime dependencies and no native binary. That
  * last property is why it exists: importing `@lloyal-labs/rig` would pull the
- * App runtime and chain-import `lloyal-agents` → `sdk` → the native
+ * Ability runtime and chain-import `lloyal-agents` → `sdk` → the native
  * `lloyal.node`, and a CLI that scaffolds projects must not require a native
  * binary on the user's platform. This file used to carry a hand-duplicated
  * copy of rig's verify surface for exactly that reason.
@@ -19,11 +19,11 @@
  * - **Error prose.** rig explains that the framework refuses to trust keys it
  *   does not vendor; these messages are terse. `verifyCatalogSignature`
  *   returns a boolean precisely so each caller keeps its own wording.
- * - **Version resolution.** `resolveAppVersion` and the semver matcher below
+ * - **Version resolution.** `resolveAbilityVersion` and the semver matcher below
  *   are hand-rolled to keep this package dependency-free. rig uses node-semver
  *   and the two genuinely disagree — on `'*'` against a prerelease, and on
  *   `'>=1.0.0'`, which rig accepts and this rejects. Both behaviours are
- *   asserted by tests. Merging them would change which version of an app
+ *   asserted by tests. Merging them would change which version of an ability
  *   installs, so they stay apart until that is decided on purpose.
  *
  * The shape check and the signed-bytes assembly come from the shared package
@@ -42,10 +42,10 @@ import {
   verifyCatalogSignature,
   isWellFormedCatalog,
   BundleVerificationError,
-  AppNotFoundError,
+  AbilityNotFoundError,
 } from '@lloyal-labs/channel-verify';
 import type {
-  AppBundleManifest,
+  AbilityBundleManifest,
   CatalogVersion,
   CatalogEntryMetadata,
   CatalogEntry,
@@ -67,10 +67,10 @@ export {
   CHANNEL_CATALOG_URL,
   CHANNEL_TRUST_ROOTS,
   BundleVerificationError,
-  AppNotFoundError,
+  AbilityNotFoundError,
 };
 export type {
-  AppBundleManifest,
+  AbilityBundleManifest,
   CatalogVersion,
   CatalogEntryMetadata,
   CatalogEntry,
@@ -82,10 +82,10 @@ export type {
 /**
  * The Ed25519 primitive, the npm-compatible integrity digest, and the
  * canonical-JSON encoding that defines the catalog signature. Re-exported so
- * `vendor-app.ts` and the commands keep importing them from here.
+ * `vendor-ability.ts` and the commands keep importing them from here.
  *
  * These were duplicated from `@lloyal-labs/rig` because rig's entry
- * chain-imports the App runtime and the native `@lloyal-labs/lloyal.node`, and
+ * chain-imports the Ability runtime and the native `@lloyal-labs/lloyal.node`, and
  * a CLI that scaffolds projects must not require a native binary on the user's
  * platform. `@lloyal-labs/channel-verify` is that same surface with no native
  * dependency and no runtime dependency at all, so the reason for the copy is
@@ -156,20 +156,20 @@ export async function fetchAndVerifyCatalog(): Promise<SignedCatalog> {
 /**
  * Resolve a name + optional semver range against a verified catalog to
  * a specific {@link CatalogVersion}. Picks the highest matching version
- * (semver-rcompare order). Throws {@link AppNotFoundError} if the name
+ * (semver-rcompare order). Throws {@link AbilityNotFoundError} if the name
  * is absent or no version matches the range.
  *
  * Pure: doesn't fetch — caller passes the verified catalog.
  */
-export function resolveAppVersion(
+export function resolveAbilityVersion(
   catalog: SignedCatalog,
   name: string,
   opts: { semver?: string } = {},
 ): CatalogVersion {
   const entry = catalog.entries.find((e) => e.name === name);
   if (!entry) {
-    throw new AppNotFoundError(
-      `App "${name}" is not listed in the catalog at ${CHANNEL_CATALOG_URL}.`,
+    throw new AbilityNotFoundError(
+      `Ability "${name}" is not listed in the catalog at ${CHANNEL_CATALOG_URL}.`,
     );
   }
   const range = opts.semver;
@@ -178,8 +178,8 @@ export function resolveAppVersion(
     : [...entry.versions];
   if (matching.length === 0) {
     const available = entry.versions.map((v) => v.version).join(', ') || '(none published)';
-    throw new AppNotFoundError(
-      `App "${name}" has no version matching "${range ?? '*'}". ` +
+    throw new AbilityNotFoundError(
+      `Ability "${name}" has no version matching "${range ?? '*'}". ` +
         `Published versions: ${available}.`,
     );
   }
@@ -189,14 +189,14 @@ export function resolveAppVersion(
 
 /**
  * Fetch a tarball manifest and cross-check against its catalog entry,
- * then return the validated `AppBundleManifest`. Does NOT verify the
+ * then return the validated `AbilityBundleManifest`. Does NOT verify the
  * tarball itself — caller fetches the tarball bytes and calls
  * `verifyBundle(bytes, manifest.signature, trustKey)` separately.
  */
 export async function fetchAndVerifyManifest(
   entry: CatalogVersion,
   name: string,
-): Promise<{ manifest: AppBundleManifest; trustKey: Uint8Array }> {
+): Promise<{ manifest: AbilityBundleManifest; trustKey: Uint8Array }> {
   const response = await httpFetch(entry.manifestUrl);
   if (!response.ok) {
     throw new BundleVerificationError(
@@ -204,9 +204,9 @@ export async function fetchAndVerifyManifest(
     );
   }
   const text = await response.text();
-  let manifest: AppBundleManifest;
+  let manifest: AbilityBundleManifest;
   try {
-    manifest = JSON.parse(text) as AppBundleManifest;
+    manifest = JSON.parse(text) as AbilityBundleManifest;
   } catch (err) {
     throw new BundleVerificationError(
       `Manifest at ${entry.manifestUrl} is not valid JSON: ${asMessage(err)}`,

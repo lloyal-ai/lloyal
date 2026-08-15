@@ -3,7 +3,7 @@
  *
  * The encoding itself lives in `@lloyal-labs/channel-verify` and is pinned
  * there against golden vectors and this same frozen catalog. What THIS file
- * asserts is the seam: that the CLI's own surface — the symbols `vendor-app.ts`
+ * asserts is the seam: that the CLI's own surface — the symbols `vendor-ability.ts`
  * and the commands import from `../src/verify` — still resolves to a verifier
  * that accepts bytes the platform actually signed.
  *
@@ -28,7 +28,7 @@ import {
   canonicalJson,
   catalogSignedBytes,
   verifyBundle,
-  resolveAppVersion,
+  resolveAbilityVersion,
   CHANNEL_TRUST_ROOTS,
   type SignedCatalog,
 } from '../src/verify';
@@ -93,13 +93,18 @@ describe('the install path verifies a real signed catalog', () => {
     );
   });
 
-  it('resolves a real app out of the verified catalog', () => {
+  it('resolves a real ability out of the verified catalog', () => {
     // The CLI keeps its own zero-dependency semver matcher — deliberately NOT
     // shared with rig, which uses node-semver and disagrees with it on `'*'`
     // against a prerelease and on `'>=1.0.0'`. Unifying them would change which
     // version installs, so this asserts the CLI's own resolution over the same
     // verified catalog it will actually see.
-    const entry = resolveAppVersion(catalog, 'lloyal/wikipedia');
+    const entry = resolveAbilityVersion(catalog, 'lloyal/wikipedia');
+    // `-app`, not `-ability`, and deliberately so: the fixture is the PRODUCTION
+    // catalog as served and signed, and its bytes cannot be edited without
+    // invalidating the signature this file exists to check. The published
+    // abilities keep their old import names until the channel is re-signed —
+    // at which point this fixture is recaptured and this string moves with it.
     expect(entry.importName).toBe('@lloyal-labs/wikipedia-app');
     expect(entry.tarballUrl.startsWith('https://apps.lloyal.ai/')).toBe(true);
   });

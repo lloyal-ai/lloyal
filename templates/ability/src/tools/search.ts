@@ -6,7 +6,7 @@ import type { JsonSchema } from "@lloyal-labs/lloyal-agents";
 /**
  * __NAME___search — search the __NAME__ backend for items matching a query.
  *
- * Scaffolded with Wikipedia's opensearch endpoint so the app runs out of
+ * Scaffolded with Wikipedia's opensearch endpoint so the ability runs out of
  * the box. Replace `execute` with your real backend; keep the schema +
  * return shape so consumers stay compatible.
  */

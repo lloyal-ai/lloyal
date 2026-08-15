@@ -7,7 +7,7 @@
  * fails fast on its own; it is the silent-drop case this exists for.
  *
  * That became reachable from every scaffold in 0.8.0, when vendoring a
- * template's default apps stopped being gated on a TTY: a CI runner without
+ * template's default abilities stopped being gated on a TTY: a CI runner without
  * egress now waits indefinitely where it used to return immediately.
  *
  * **The deadline covers only the wait for headers**, and is cleared the moment

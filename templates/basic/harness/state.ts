@@ -281,11 +281,11 @@ export function resultMeta(result: string | null): string {
 
 // ── domain rendering: the Wikipedia articles the model has read ──
 //
-// The default app (`lloyal/wikipedia`) is the ONE domain this austere view
+// The default ability (`lloyal/wikipedia`) is the ONE domain this austere view
 // knows how to render richly. The helpers below turn its STRUCTURED tool results
 // (never the model's prose) into cards + activity — so the UI shows the source
-// material flowing through the model. Swap the app and these gracefully return
-// nothing; grow the view with a helper per tool your app exposes.
+// material flowing through the model. Swap the ability and these gracefully return
+// nothing; grow the view with a helper per tool your ability exposes.
 
 /** One article the model fetched — a card in the view (thumbnail optional). */
 export interface WikiSource {
@@ -312,7 +312,7 @@ const str = (v: unknown): string | undefined => (typeof v === "string" ? v : und
  * The Wikipedia articles the agents have READ — one entry per COMPLETED
  * `wikipedia_fetch`, deduped by URL (then title), in first-seen order. Built
  * from the structured `wikipedia_fetch` result (`{title, extract, url,
- * thumbnail}`) the app now returns — not the model's stream. Errors/in-flight
+ * thumbnail}`) the ability now returns — not the model's stream. Errors/in-flight
  * calls are skipped. This is the source material the view streams as cards.
  */
 export function wikipediaSources(agents: Iterable<AgentView>): WikiSource[] {

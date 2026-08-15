@@ -22,7 +22,7 @@ For research intent, the rules for the `tasks` array:
 
 5. **Vocabulary-loaded.** Use the technical terms practitioners in that field would search for.
 
-6. **Route each task to its source (when sources are listed).** If the context below lists knowledge sources, set each task's `app` to the source that holds it, using the source's EXACT name. Ground this in the `Source coverage` probe results when present (they show which source actually has each entity) — fall back to each source's stated purpose otherwise. If a facet genuinely needs distinct, valuable content from two sources, split it into one task per source. Keep the description itself about WHAT to find — don't repeat the source name in prose. (When no sources are listed, omit `app` and just describe the facet.)
+6. **Route each task to its source (when sources are listed).** If the context below lists knowledge sources, set each task's `<%= it.routingKey %>` to the source that holds it, using the source's EXACT name. Ground this in the `Source coverage` probe results when present (they show which source actually has each entity) — fall back to each source's stated purpose otherwise. If a facet genuinely needs distinct, valuable content from two sources, split it into one task per source. Keep the description itself about WHAT to find — don't repeat the source name in prose. (When no sources are listed, omit `<%= it.routingKey %>` and just describe the facet.)
 
 GOOD research chain for "How do modern cancer immunotherapies achieve durable remission?":
 
@@ -38,7 +38,7 @@ GOOD research chain for "How do modern cancer immunotherapies achieve durable re
 }
 ```
 
-Notice that tasks 2-4 each reference what earlier tasks will have surfaced. None of them can be answered in isolation. This is a real dependency chain — the KV spine carries useful signal between every task. (Per-task `app` routing is omitted from this example — see rule 6 and the live `Source coverage` reports for routing decisions on your actual catalog.)
+Notice that tasks 2-4 each reference what earlier tasks will have surfaced. None of them can be answered in isolation. This is a real dependency chain — the KV spine carries useful signal between every task. (Per-task `<%= it.routingKey %>` routing is omitted from this example — see rule 6 and the live `Source coverage` reports for routing decisions on your actual catalog.)
 
 GOOD passthrough for a follow-up after the above research completed: "What did you mean by cytokine release syndrome in the trade-offs section?":
 

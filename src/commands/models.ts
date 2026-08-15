@@ -5,7 +5,7 @@
  * catalog model (rig fetches + digest-verifies, fail-closed, on next run); a
  * `path` is a BYO `.gguf` (trusted by possession). These verbs OWN the write, so
  * the yml is never hand-edited. `<role>` is the trunk `llm` (default) or a
- * `reranker` (the model behind an app-declared service).
+ * `reranker` (the model behind an ability-declared service).
  *
  * `models:download` streams a `.gguf` from a URL into `models/<role>/` with a
  * zero-native-dep fetch (same Apache posture as `install.ts`), NEVER buffering
@@ -234,7 +234,7 @@ export const modelsListCommand: Command = {
         const shown =
           spec == null
             ? role === 'reranker'
-              ? '(unset — auto-provisions the catalog default when an app needs it)'
+              ? '(unset — auto-provisions the catalog default when an ability needs it)'
               : '(unset)'
             : 'id' in spec
               ? `id: ${spec.id}`

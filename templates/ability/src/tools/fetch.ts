@@ -6,7 +6,7 @@ import type { JsonSchema } from "@lloyal-labs/lloyal-agents";
 /**
  * __NAME___fetch — fetch the full detail for a single __NAME__ item by id.
  *
- * Scaffolded with Wikipedia's REST page-summary endpoint so the app runs
+ * Scaffolded with Wikipedia's REST page-summary endpoint so the ability runs
  * out of the box. Replace `execute` with your real backend; keep the
  * schema + return shape so consumers stay compatible.
  */

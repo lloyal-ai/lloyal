@@ -2,7 +2,7 @@
  * Publish-time "attention surface" extraction.
  *
  * At `lloyal publish` (a TRUSTED publisher-machine context) we serialize
- * everything the app injects into the model's context — the per-spawn skill
+ * everything the ability injects into the model's context — the per-spawn skill
  * prose, every tool's name + description + parameter schema, `useWhen`, and the
  * config schema — into `attention-surface.json`, which the publish command
  * writes INTO the npm tarball. Because the worker signs the tarball bytes at
@@ -11,12 +11,12 @@
  * executing untrusted code.
  *
  * Tool descriptions + parameter schemas live in compiled `Tool` instances, so
- * the only way to read them is to CONSTRUCT the app. We do that in an ISOLATED
- * subprocess (`node -e`, cwd = the app dir so its own deps resolve) under a
+ * the only way to read them is to CONSTRUCT the ability. We do that in an ISOLATED
+ * subprocess (`node -e`, cwd = the ability dir so its own deps resolve) under a
  * describe harness that seeds mock Effection contexts — never in the CLI's own
  * process. This keeps the consumer-facing CLI dependency-free, sandboxes
  * arbitrary construction code behind a 30s timeout, and degrades LOUDLY to
- * app.json tool NAMES if construction throws / times out / the app is ESM-only.
+ * ability.json tool NAMES if construction throws / times out / the ability is ESM-only.
  */
 
 import { spawn } from 'node:child_process';
@@ -43,7 +43,7 @@ export interface AttentionSurface {
   degraded?: boolean;
 }
 
-export interface DescribeAppJson {
+export interface DescribeAbilityJson {
   name: string;
   appProtocolVersion?: string;
   protocol?: { name?: string; useWhen?: string; tools?: string[] };
@@ -59,8 +59,8 @@ export interface DescribePackageJson {
 const DESCRIBE_TIMEOUT_MS = 30_000;
 
 /**
- * The describe subprocess body. Runs in the APP's directory so `require`
- * resolves the app's own `effection` + `@lloyal-labs/lloyal-agents`. Reads the
+ * The describe subprocess body. Runs in the ABILITY's directory so `require`
+ * resolves the ability's own `effection` + `@lloyal-labs/lloyal-agents`. Reads the
  * entry path + required-config keys from env (robust vs `-e` argv quirks).
  */
 const DESCRIBE_SCRIPT = `(async () => {
@@ -72,10 +72,18 @@ const DESCRIBE_SCRIPT = `(async () => {
     const entry = process.env.HARNESS_DESCRIBE_ENTRY;
     const required = JSON.parse(process.env.HARNESS_DESCRIBE_REQUIRED || '[]');
     const { run } = require('effection');
-    const { RerankerCtx, AppConfigStoreCtx } = require('@lloyal-labs/lloyal-agents');
+    // Resolved from the ABILITY's own installed @lloyal-labs/lloyal-agents, whose
+    // version we do not control — so accept both the current name and the one it
+    // replaced. A bare destructure of a name the installed version does not export
+    // yields undefined and throws on .set() below, degrading this to names-only
+    // with a stack trace as the only clue. Both spellings, permanently.
+    const agents = require('@lloyal-labs/lloyal-agents');
+    const RerankerCtx = agents.RerankerCtx;
+    const ConfigStoreCtx = agents.AbilityConfigStoreCtx || agents.AppConfigStoreCtx;
+    if (!ConfigStoreCtx) throw new Error('@lloyal-labs/lloyal-agents exports neither AbilityConfigStoreCtx nor AppConfigStoreCtx');
     const mod = require(entry);
-    const key = Object.keys(mod).find((k) => /^create[A-Za-z0-9]*App$/.test(k) && typeof mod[k] === 'function');
-    if (!key) throw new Error('no create*App factory export in ' + entry);
+    const key = Object.keys(mod).find((k) => /^create[A-Za-z0-9]*(Ability|App)$/.test(k) && typeof mod[k] === 'function');
+    if (!key) throw new Error('no create*Ability factory export in ' + entry);
     const factory = mod[key];
     const synth = {};
     for (const k of required) {
@@ -99,12 +107,12 @@ const DESCRIBE_SCRIPT = `(async () => {
       rerank: async (_q, items) => items,
     };
     const cfgStore = { *get() { return synth; }, *set() {}, *clear() {} };
-    const app = await run(function* () {
+    const ability = await run(function* () {
       yield* RerankerCtx.set(reranker);
-      yield* AppConfigStoreCtx.set(cfgStore);
+      yield* ConfigStoreCtx.set(cfgStore);
       return yield* factory();
     });
-    const tools = (app.tools || []).map((t) => ({
+    const tools = (ability.tools || []).map((t) => ({
       name: String(t.name),
       description: typeof t.description === 'string' ? t.description : '',
       parameters: t.parameters == null ? null : t.parameters,
@@ -130,7 +138,7 @@ const DESCRIBE_SCRIPT = `(async () => {
   // bounded by the parent spawn's \`timeout\`.
 })();`;
 
-function requiredConfigKeys(configSchema: DescribeAppJson['configSchema']): string[] {
+function requiredConfigKeys(configSchema: DescribeAbilityJson['configSchema']): string[] {
   const req = configSchema?.required;
   return Array.isArray(req) ? req.filter((k): k is string => typeof k === 'string') : [];
 }
@@ -148,17 +156,17 @@ function coerceTool(t: unknown): AttentionSurfaceTool | null {
 }
 
 /**
- * Construct the app in an isolated subprocess and read its tool schemas.
+ * Construct the ability in an isolated subprocess and read its tool schemas.
  * Returns null on ANY failure (logged) so the caller falls back to names.
  */
 function describeTools(
-  appDir: string,
+  abilityDir: string,
   mainRel: string,
   required: string[],
-  appName: string,
+  abilityName: string,
 ): Promise<AttentionSurfaceTool[] | null> {
   return new Promise((resolvePromise) => {
-    const entry = resolve(appDir, mainRel);
+    const entry = resolve(abilityDir, mainRel);
     // Strip NODE_OPTIONS so a parent-process loader (e.g. a test runner's, or a
     // publisher's wrapper) isn't inherited by the bare `node -e` describe child.
     const childEnv: NodeJS.ProcessEnv = {
@@ -168,7 +176,7 @@ function describeTools(
     };
     delete childEnv.NODE_OPTIONS;
     const proc = spawn(process.execPath, ['-e', DESCRIBE_SCRIPT], {
-      cwd: appDir,
+      cwd: abilityDir,
       stdio: ['ignore', 'pipe', 'pipe'],
       timeout: DESCRIBE_TIMEOUT_MS,
       env: childEnv,
@@ -179,9 +187,9 @@ function describeTools(
     proc.stderr.on('data', (c: Buffer) => (err += c.toString('utf-8')));
     const fallback = (why: string) => {
       process.stderr.write(
-        `lloyal publish: WARNING — could not construct "${appName}" to read tool ` +
+        `lloyal publish: WARNING — could not construct "${abilityName}" to read tool ` +
           `descriptions/parameters (${why.trim().split('\n')[0] || 'unknown'}). ` +
-          `Falling back to tool NAMES only from app.json. The attention surface for ` +
+          `Falling back to tool NAMES only from ability.json. The attention surface for ` +
           `this version will omit tool descriptions + parameter schemas.\n`,
       );
       resolvePromise(null);
@@ -207,35 +215,35 @@ function describeTools(
 }
 
 /**
- * Build the full attention surface for an app. `protocol` + `configSchema` come
- * from app.json; `skill` is the raw skill.eta file; tool schemas come from the
+ * Build the full attention surface for an ability. `protocol` + `configSchema` come
+ * from ability.json; `skill` is the raw skill.eta file; tool schemas come from the
  * describe subprocess (with a names-only fallback).
  */
 export async function buildAttentionSurface(
-  appDir: string,
-  appJson: DescribeAppJson,
+  abilityDir: string,
+  abilityJson: DescribeAbilityJson,
   packageJson: DescribePackageJson,
 ): Promise<AttentionSurface> {
   const protocol = {
-    name: appJson.protocol?.name ?? appJson.name,
-    useWhen: appJson.protocol?.useWhen ?? '',
-    tools: Array.isArray(appJson.protocol?.tools)
-      ? appJson.protocol!.tools!.filter((t): t is string => typeof t === 'string')
+    name: abilityJson.protocol?.name ?? abilityJson.name,
+    useWhen: abilityJson.protocol?.useWhen ?? '',
+    tools: Array.isArray(abilityJson.protocol?.tools)
+      ? abilityJson.protocol!.tools!.filter((t): t is string => typeof t === 'string')
       : [],
   };
 
   let skill = '';
   try {
-    skill = await readFile(join(appDir, 'skill.eta'), 'utf-8');
+    skill = await readFile(join(abilityDir, 'skill.eta'), 'utf-8');
   } catch {
-    // Apps without a skill.eta are valid (rare) — leave skill empty.
+    // Abilities without a skill.eta are valid (rare) — leave skill empty.
   }
 
   const described = await describeTools(
-    appDir,
+    abilityDir,
     packageJson.main ?? 'dist/index.js',
-    requiredConfigKeys(appJson.configSchema),
-    appJson.name,
+    requiredConfigKeys(abilityJson.configSchema),
+    abilityJson.name,
   );
 
   const degraded = described === null;
@@ -247,7 +255,7 @@ export async function buildAttentionSurface(
   }));
 
   const surface: AttentionSurface = { schemaVersion: 1, protocol, skill, tools };
-  if (appJson.configSchema !== undefined) surface.configSchema = appJson.configSchema;
+  if (abilityJson.configSchema !== undefined) surface.configSchema = abilityJson.configSchema;
   if (degraded) surface.degraded = true;
   return surface;
 }

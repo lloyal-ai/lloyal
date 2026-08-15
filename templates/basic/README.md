@@ -1,6 +1,6 @@
 # __NAME__
 
-A vertical inference harness. The model lives *inside* the app — no API key, and nothing on the inference path touches the network.
+A vertical inference harness. The model lives *inside* the ability — no API key, and nothing on the inference path touches the network.
 
 ## Run it
 
@@ -26,10 +26,10 @@ harness/
 targets/
   <surface>/     one dir per surface — cli · desktop · web
     index.ts     boot: resolve the model, mount a view, run your harness
-    view.tsx     the view (Ink for cli, React for desktop/web) — or bring a whole app
+    view.tsx     the view (Ink for cli, React for desktop/web) — or bring a whole ability
 models/
   llm/           the resident model (fetched on first run; gitignored)
-vendor/          signed AgentApps — Ed25519-verified tarballs, committed
+vendor/          signed Abilities — Ed25519-verified tarballs, committed
 harness.yml      targets + model
 ```
 
@@ -38,13 +38,13 @@ Everything under `targets/` is convention handled for you — the boot mounts a 
 ## Add capabilities
 
 ```sh
-npx lloyal-ai install <publisher>/<name>   # a signed AgentApp from apps.lloyal.ai
+npx lloyal-ai install <publisher>/<name>   # a signed Ability from apps.lloyal.ai
 ```
 
-Enable it in `harness/harness.ts` alongside `createWikipediaApp`.
+Enable it in `harness/harness.ts` alongside `createWikipediaAbility`.
 
-Apps are **Ed25519-verified and vendored locally** — `lloyal` fetches the
+Abilities are **Ed25519-verified and vendored locally** — `lloyal` fetches the
 signed tarball, checks its signature, and writes it to `vendor/` with a `file:`
 dependency (never a remote-URL install). Commit `vendor/` so `npm ci` reproduces
 the exact bytes offline. If you scaffolded with `--skip-install`, fetch the
-default app with `npx lloyal-ai install lloyal/wikipedia` before the first run.
+default ability with `npx lloyal-ai install lloyal/wikipedia` before the first run.

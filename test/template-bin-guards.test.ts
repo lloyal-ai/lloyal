@@ -4,9 +4,9 @@
  * node scripts with top-level `await import` — importing them into vitest would
  * test something other than what ships.
  *
- * `preflight-apps.js` runs ahead of the compiler and answers ONE question: were
- * this harness's AgentApps ever vendored? `run.js` runs at boot and classifies a
- * real `ERR_MODULE_NOT_FOUND` — the regression it guards is claiming "AgentApps
+ * `preflight-abilities.js` runs ahead of the compiler and answers ONE question: were
+ * this harness's Abilities ever vendored? `run.js` runs at boot and classifies a
+ * real `ERR_MODULE_NOT_FOUND` — the regression it guards is claiming "Abilities
  * are not installed" for an unbuilt `dist/` or any un-installed dependency,
  * which points the user at a command that cannot help.
  *
@@ -32,7 +32,7 @@ function fixture(pkg: Record<string, unknown>, files: Record<string, string> = {
   const dir = mkdtempSync(join(tmpdir(), 'tmpl-guard-'));
   created.push(dir);
   mkdirSync(join(dir, 'bin'), { recursive: true });
-  for (const f of ['preflight-apps.js', 'run.js']) {
+  for (const f of ['preflight-abilities.js', 'run.js']) {
     copyFileSync(join(BASIC_BIN, f), join(dir, 'bin', f));
   }
   writeFileSync(join(dir, 'package.json'), `${JSON.stringify(pkg, null, 2)}\n`);
@@ -52,14 +52,14 @@ function run(dir: string, script: string): { status: number | null; stderr: stri
 const WIKIPEDIA = 'lloyal/wikipedia@1.2.0';
 const VENDORED = 'file:vendor/lloyal__wikipedia-1.2.0.tgz';
 
-describe('preflight-apps.js', () => {
-  it('fails with the install line when a recorded app was never vendored', () => {
+describe('preflight-abilities.js', () => {
+  it('fails with the install line when a recorded ability was never vendored', () => {
     const dir = fixture({
       name: 'p',
       type: 'module',
-      harnessdev: { template: 'basic', targets: ['cli'], apps: [WIKIPEDIA] },
+      harnessdev: { template: 'basic', targets: ['cli'], abilities: [WIKIPEDIA] },
     });
-    const { status, stderr } = run(dir, 'preflight-apps.js');
+    const { status, stderr } = run(dir, 'preflight-abilities.js');
     expect(status).toBe(1);
     expect(stderr).toContain(`npx lloyal-ai install ${WIKIPEDIA}`);
   });
@@ -68,65 +68,65 @@ describe('preflight-apps.js', () => {
     const dir = fixture({
       name: 'p',
       type: 'module',
-      dependencies: { '@lloyal-labs/wikipedia-app': VENDORED },
-      harnessdev: { template: 'basic', targets: ['cli'], apps: [WIKIPEDIA] },
+      dependencies: { '@lloyal-labs/wikipedia-ability': VENDORED },
+      harnessdev: { template: 'basic', targets: ['cli'], abilities: [WIKIPEDIA] },
     });
-    expect(run(dir, 'preflight-apps.js').status).toBe(0);
+    expect(run(dir, 'preflight-abilities.js').status).toBe(0);
   });
 
-  it('names only the missing app when others are satisfied', () => {
+  it('names only the missing ability when others are satisfied', () => {
     const dir = fixture({
       name: 'p',
       type: 'module',
-      dependencies: { '@lloyal-labs/corpus-app': 'file:vendor/lloyal__corpus-1.3.0.tgz' },
+      dependencies: { '@lloyal-labs/corpus-ability': 'file:vendor/lloyal__corpus-1.3.0.tgz' },
       harnessdev: {
         template: 'research',
         targets: ['cli'],
-        apps: ['lloyal/corpus@1.3.0', 'lloyal/web@1.3.0'],
+        abilities: ['lloyal/corpus@1.3.0', 'lloyal/web@1.3.0'],
       },
     });
-    const { status, stderr } = run(dir, 'preflight-apps.js');
+    const { status, stderr } = run(dir, 'preflight-abilities.js');
     expect(status).toBe(1);
     expect(stderr).toContain('npx lloyal-ai install lloyal/web@1.3.0');
     expect(stderr).not.toContain('lloyal/corpus@1.3.0');
   });
 
-  it('passes when the marker records no apps — absent means UNKNOWN, not none', () => {
-    // A hand-written project, or one predating the `apps` marker, must not be
+  it('passes when the marker records no abilities — absent means UNKNOWN, not none', () => {
+    // A hand-written project, or one predating the `abilities` marker, must not be
     // blocked by a guard that has nothing to check.
-    expect(run(fixture({ name: 'p', type: 'module' }), 'preflight-apps.js').status).toBe(0);
+    expect(run(fixture({ name: 'p', type: 'module' }), 'preflight-abilities.js').status).toBe(0);
   });
 
   it('never calls an unparseable spec missing', () => {
     const dir = fixture({
       name: 'p',
       type: 'module',
-      harnessdev: { template: 'basic', targets: ['cli'], apps: ['not-a-valid-spec'] },
+      harnessdev: { template: 'basic', targets: ['cli'], abilities: ['not-a-valid-spec'] },
     });
-    expect(run(dir, 'preflight-apps.js').status).toBe(0);
+    expect(run(dir, 'preflight-abilities.js').status).toBe(0);
   });
 });
 
 describe('run.js — classifies ERR_MODULE_NOT_FOUND before advising', () => {
-  const withApp = (deps?: Record<string, string>): Record<string, unknown> => ({
+  const withAbility = (deps?: Record<string, string>): Record<string, unknown> => ({
     name: 'p',
     type: 'module',
     ...(deps ? { dependencies: deps } : {}),
-    harnessdev: { template: 'basic', targets: ['cli'], apps: [WIKIPEDIA] },
+    harnessdev: { template: 'basic', targets: ['cli'], abilities: [WIKIPEDIA] },
   });
 
-  it('an unbuilt dist is a build problem, not a missing AgentApp', () => {
+  it('an unbuilt dist is a build problem, not a missing Ability', () => {
     // The regression: this path used to print `lloyal install`, which
     // cannot fix an unbuilt project.
-    const { status, stderr } = run(fixture(withApp()), 'run.js');
+    const { status, stderr } = run(fixture(withAbility()), 'run.js');
     expect(status).toBe(1);
     expect(stderr).toContain('npm run build');
     expect(stderr).not.toContain('lloyal install');
   });
 
-  it('a bare specifier absent from dependencies is the AgentApp case', () => {
-    const dir = fixture(withApp(), {
-      'dist/targets/cli/index.js': 'import "@lloyal-labs/wikipedia-app";\n',
+  it('a bare specifier absent from dependencies is the Ability case', () => {
+    const dir = fixture(withAbility(), {
+      'dist/targets/cli/index.js': 'import "@lloyal-labs/wikipedia-ability";\n',
     });
     const { status, stderr } = run(dir, 'run.js');
     expect(status).toBe(1);
@@ -134,9 +134,9 @@ describe('run.js — classifies ERR_MODULE_NOT_FOUND before advising', () => {
     expect(stderr).toContain(`npx lloyal-ai install ${WIKIPEDIA}`);
   });
 
-  it('a bare specifier that IS a dependency means npm install, not install-app', () => {
-    const dir = fixture(withApp({ '@lloyal-labs/wikipedia-app': VENDORED }), {
-      'dist/targets/cli/index.js': 'import "@lloyal-labs/wikipedia-app";\n',
+  it('a bare specifier that IS a dependency means npm install, not install-ability', () => {
+    const dir = fixture(withAbility({ '@lloyal-labs/wikipedia-ability': VENDORED }), {
+      'dist/targets/cli/index.js': 'import "@lloyal-labs/wikipedia-ability";\n',
     });
     const { status, stderr } = run(dir, 'run.js');
     expect(status).toBe(1);
@@ -145,7 +145,7 @@ describe('run.js — classifies ERR_MODULE_NOT_FOUND before advising', () => {
   });
 
   it('rethrows anything that is not ERR_MODULE_NOT_FOUND', () => {
-    const dir = fixture(withApp(), {
+    const dir = fixture(withAbility(), {
       'dist/targets/cli/index.js': 'throw new Error("harness boom");\n',
     });
     const { status, stderr } = run(dir, 'run.js');

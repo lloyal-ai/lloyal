@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Boot the built cli target.
 //
-// One failure here is worth translating rather than dumping: a MISSING AgentApp.
-// harness/harness.ts imports its apps at the top level, so a project whose apps
+// One failure here is worth translating rather than dumping: a MISSING Ability.
+// harness/harness.ts imports its abilities at the top level, so a project whose abilities
 // were never fetched dies on this import with a bare ERR_MODULE_NOT_FOUND stack.
 // But that SAME code covers an unbuilt dist/ and any un-installed dependency, so
 // classify the unresolved specifier before naming a fix — advice for the wrong
@@ -23,7 +23,7 @@ try {
  * Node names the unresolved specifier in the message — `Cannot find package 'x'`
  * for a bare specifier, `Cannot find module '/abs/path'` for a path. A path can
  * only be our own build output. A bare specifier is a dependency, and whether it
- * is an un-vendored AgentApp or a dep that was simply never installed is decided
+ * is an un-vendored Ability or a dep that was simply never installed is decided
  * by package.json.
  */
 function diagnose(err) {
@@ -53,7 +53,7 @@ function diagnose(err) {
 
   return [
     `\`${specifier}\` is not a dependency of this project.`,
-    "This harness imports AgentApps at the top level — fetch the signed",
+    "This harness imports Abilities at the top level — fetch the signed",
     "(Ed25519-verified) bundles, then start again:",
     "",
     ...installLines(pkg),
@@ -62,8 +62,8 @@ function diagnose(err) {
 
 /** The `lloyal install` specs `lloyal new` recorded for this project. */
 function installLines(pkg) {
-  const apps = pkg.harnessdev?.apps;
-  const specs = Array.isArray(apps) ? apps.filter((a) => typeof a === "string") : [];
+  const abilities = pkg.harnessdev?.abilities;
+  const specs = Array.isArray(abilities) ? abilities.filter((a) => typeof a === "string") : [];
   return (specs.length ? specs : ["<publisher>/<name>"]).map(
     (spec) => `  npx lloyal-ai install ${spec}`,
   );
