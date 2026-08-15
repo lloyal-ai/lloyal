@@ -10,12 +10,19 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { buildAttentionSurface } from '../src/describe';
 
-// The two "real first-party app" cases lived here and are gone with the repo
-// split. They constructed @lloyal-labs/{wikipedia,corpus}-app in a subprocess,
-// which needs those apps built AND `effection` + `@lloyal-labs/lloyal-agents`
-// resolvable — and that chain reaches the native `lloyal.node`. Installing it
-// as a devDependency would give this repo the native dependency whose absence
-// is the entire reason the CLI is a separate package.
+// The two "real first-party app" cases lived here and cannot follow the split.
+// They constructed @lloyal-labs/{wikipedia,corpus}-app in a subprocess, and
+// those apps are NOT obtainable from this repo: they are 404 on npm by design,
+// distributed only through the signed channel. They exist as source in
+// lloyal-ai/hdk or as signed bundles behind apps.lloyal.ai, and neither is
+// reachable from a test here.
+//
+// (Not a dependency problem. `effection` + `@lloyal-labs/lloyal-agents` could be
+// devDependencies — devDeps are never published, so they would not touch the
+// zero-runtime-dep property that keeps `npx` free of a native binary. It would
+// only make installs heavier. The blocker is the apps themselves. Vendoring
+// them through the CLI's own verifyAndVendorApp would work but makes a unit
+// test depend on the live channel and routes describe.ts through install.ts.)
 //
 // So the subprocess construction path is UNCOVERED here. What remains is the
 // fallback contract, which is hermetic and is the part that protects users: a
