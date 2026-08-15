@@ -10,24 +10,17 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { buildAttentionSurface } from '../src/describe';
 
-// The two "real first-party app" cases lived here and cannot follow the split.
-// They constructed @lloyal-labs/{wikipedia,corpus}-app in a subprocess, and
-// those apps are NOT obtainable from this repo: they are 404 on npm by design,
-// distributed only through the signed channel. They exist as source in
-// lloyal-ai/hdk or as signed bundles behind apps.lloyal.ai, and neither is
-// reachable from a test here.
+// The real-construction cases live in `describe-scaffolded-app.test.ts`, which
+// scaffolds an app with `app:new` and extracts from it. They used to construct
+// @lloyal-labs/{wikipedia,corpus}-app, which were convenient fixtures sitting
+// prebuilt in the monorepo — not a requirement. `buildAttentionSurface` takes a
+// directory and has no notion of who published it; a scaffolded third-party app
+// is what real publishers push through `publish`, so it is the better fixture.
 //
-// (Not a dependency problem. `effection` + `@lloyal-labs/lloyal-agents` could be
-// devDependencies — devDeps are never published, so they would not touch the
-// zero-runtime-dep property that keeps `npx` free of a native binary. It would
-// only make installs heavier. The blocker is the apps themselves. Vendoring
-// them through the CLI's own verifyAndVendorApp would work but makes a unit
-// test depend on the live channel and routes describe.ts through install.ts.)
-//
-// So the subprocess construction path is UNCOVERED here. What remains is the
-// fallback contract, which is hermetic and is the part that protects users: a
-// non-constructable app degrades loudly rather than silently publishing an
-// empty surface. Tracked as lloyal-ai/lloyal#1.
+// What remains HERE is the fallback contract, and it is worth keeping separate:
+// it needs no install and no build, and it asserts the safety behaviour — an app
+// that cannot be constructed degrades LOUDLY to tool names rather than silently
+// publishing an empty surface.
 
 describe('buildAttentionSurface — fallback', () => {
   it('degrades LOUDLY to app.json tool NAMES when the app cannot be constructed', async () => {

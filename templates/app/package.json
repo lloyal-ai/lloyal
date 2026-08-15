@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "node --test --import tsx test/"
+    "test": "echo \"no tests yet — add them under test/ and switch this to: node --test --import tsx test/\" && exit 0"
   },
   "peerDependencies": {
     "@lloyal-labs/lloyal-agents": "^3.0.0",
@@ -30,6 +30,7 @@
   "devDependencies": {
     "@lloyal-labs/lloyal-agents": "^3.0.0",
     "@lloyal-labs/rig": "^3.0.0",
+    "@types/node": "^25.3.0",
     "effection": "^4.0.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
