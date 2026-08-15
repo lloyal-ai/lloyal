@@ -1,0 +1,64 @@
+# Single package, so no publish loop — but the `npm view` guard is kept: it makes
+# a re-run after a partial failure safe, which is exactly what saved the
+# channel-verify release in lloyal-ai/hdk.
+#
+# NOTE ON FIRST PUBLISH: npm's 2026-07-31 change requires an interactive 2FA
+# challenge to CREATE a package, so this workflow CANNOT publish a brand-new
+# name — it will fail with a misleading E404. `lloyal@0.11.0` must be published
+# once by hand (`npm publish`); every version after that runs from here.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      skip_publish:
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm install
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm test
+
+      - name: Verify tarball contents
+        run: |
+          npm pack --dry-run --json > /tmp/pack.json
+          node -e "
+            const p=JSON.parse(require('fs').readFileSync('/tmp/pack.json','utf8'))[0];
+            const f=p.files.map(x=>x.path);
+            const need=['bin/run.js','LICENSE','package.json'];
+            for (const n of need) if(!f.includes(n)) throw new Error('missing '+n);
+            const t=f.filter(x=>x.startsWith('templates/')).length;
+            if (t !== 102) throw new Error('expected 102 template files, got '+t);
+            if (!f.some(x=>x.startsWith('dist/'))) throw new Error('no dist output');
+            console.log('tarball ok:', f.length, 'files');
+          "
+
+      - name: Publish
+        if: success() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.skip_publish))
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "⏭ $NAME@$VERSION already published, skipping"
+          else
+            echo "Publishing $NAME@$VERSION..."
+            npm publish --access public --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -5,45 +5,22 @@
  * non-constructable app degrades LOUDLY to tool NAMES rather than throwing.
  */
 import { describe, it, expect } from 'vitest';
-import { readFile, mkdtemp, writeFile, mkdir } from 'node:fs/promises';
+import { mkdtemp, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath } from 'node:url';
-import { buildAttentionSurface, type DescribeAppJson, type DescribePackageJson } from '../src/describe';
+import { buildAttentionSurface } from '../src/describe';
 
-const APPS_DIR = fileURLToPath(new URL('../../apps', import.meta.url));
-
-async function readApp(name: string): Promise<{ dir: string; app: DescribeAppJson; pkg: DescribePackageJson }> {
-  const dir = join(APPS_DIR, name);
-  const app = JSON.parse(await readFile(join(dir, 'app.json'), 'utf-8')) as DescribeAppJson;
-  const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8')) as DescribePackageJson;
-  return { dir, app, pkg };
-}
-
-describe('buildAttentionSurface — real first-party apps', () => {
-  it('wikipedia: full tool schemas + skill + useWhen, not degraded', async () => {
-    const { dir, app, pkg } = await readApp('wikipedia');
-    const s = await buildAttentionSurface(dir, app, pkg);
-    expect(s.degraded).toBeUndefined();
-    expect(s.protocol.name).toBe('wikipedia_research');
-    expect(s.protocol.useWhen.length).toBeGreaterThan(0);
-    expect(s.skill.length).toBeGreaterThan(0);
-    const names = s.tools.map((t) => t.name).sort();
-    expect(names).toEqual(['wikipedia_fetch', 'wikipedia_search']);
-    for (const t of s.tools) {
-      expect(t.description.length).toBeGreaterThan(0);
-      expect(t.parameters).not.toBeNull();
-    }
-  }, 60_000);
-
-  it('corpus: constructs over a seeded temp dir → full schemas', async () => {
-    const { dir, app, pkg } = await readApp('corpus');
-    const s = await buildAttentionSurface(dir, app, pkg);
-    expect(s.tools.map((t) => t.name).sort()).toEqual(['grep', 'read_file', 'search']);
-    expect(s.tools.every((t) => t.description.length > 0)).toBe(true);
-    expect(s.degraded).toBeUndefined();
-  }, 60_000);
-});
+// The two "real first-party app" cases lived here and are gone with the repo
+// split. They constructed @lloyal-labs/{wikipedia,corpus}-app in a subprocess,
+// which needs those apps built AND `effection` + `@lloyal-labs/lloyal-agents`
+// resolvable — and that chain reaches the native `lloyal.node`. Installing it
+// as a devDependency would give this repo the native dependency whose absence
+// is the entire reason the CLI is a separate package.
+//
+// So the subprocess construction path is UNCOVERED here. What remains is the
+// fallback contract, which is hermetic and is the part that protects users: a
+// non-constructable app degrades loudly rather than silently publishing an
+// empty surface. Tracked as lloyal-ai/lloyal#1.
 
 describe('buildAttentionSurface — fallback', () => {
   it('degrades LOUDLY to app.json tool NAMES when the app cannot be constructed', async () => {

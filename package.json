@@ -10,12 +10,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lloyal-ai/hdk.git",
-    "directory": "packages/harness-cli"
+    "url": "git+https://github.com/lloyal-ai/lloyal.git"
   },
-  "homepage": "https://github.com/lloyal-ai/hdk/tree/main/packages/harness-cli#readme",
+  "homepage": "https://github.com/lloyal-ai/lloyal#readme",
   "bugs": {
-    "url": "https://github.com/lloyal-ai/hdk/issues"
+    "url": "https://github.com/lloyal-ai/lloyal/issues"
   },
   "keywords": [
     "hdk",
@@ -31,7 +30,9 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
@@ -41,8 +42,11 @@
     "react": "^18.3.1"
   },
   "devDependencies": {
+    "@types/node": "^25.3.0",
     "@types/react": "^18.3.12",
-    "ink-testing-library": "^4.0.0"
+    "ink-testing-library": "^4.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.2"
   },
   "files": [
     "bin/run.js",

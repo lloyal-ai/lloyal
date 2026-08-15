@@ -1,0 +1,37 @@
+# Deliberately smaller than the monorepo's. There is no `gpu-tests` job here:
+# this package has no native surface, and in the monorepo every CLI PR either
+# waited up to 30 minutes for a CUDA run on another repo or needed a
+# `skip-gpu-tests` label. There is no `docs.yml` either — typedoc never
+# included this package.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm test
+
+      # The templates are shipped as DATA, and `files` is what keeps them in the
+      # tarball. Assert the count so a stray ignore rule or a `files` edit can't
+      # silently publish a CLI that scaffolds an incomplete project.
+      - name: Verify templates ship
+        run: |
+          COUNT=$(npm pack --dry-run --json | node -e "
+            const p=JSON.parse(require('fs').readFileSync(0,'utf8'))[0];
+            console.log(p.files.filter(f=>f.path.startsWith('templates/')).length);
+          ")
+          echo "template files in tarball: $COUNT"
+          test "$COUNT" -eq 102

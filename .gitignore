@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+
+# Internal design notes are not published from this repo, which is public.
+docs/
+
+# Scaffold output produced by running a template in place. These live at the
+# repo root because it IS the package root — npm's `files` allowlist is what
+# keeps templates/ in the tarball regardless, verified with `npm pack`.
+templates/*/out/
+templates/*/dist-web/
+templates/*/traces/
+templates/*/*.log
+templates/*/models/**/*.gguf
