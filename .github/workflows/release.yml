@@ -52,23 +52,32 @@ jobs:
       - name: Publish
         if: success() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.skip_publish))
         run: |
+          # Fail with a legible message rather than npm's ENEEDAUTH, which reads
+          # like a broken token when the usual cause is simply that the secret
+          # was never added to this repository.
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::NPM_TOKEN is not set for this repository. Add it under" \
+                 "Settings > Secrets and variables > Actions. The token needs the" \
+                 "@lloyal-labs scope at read+write, and note that npm no longer lets" \
+                 "CI CREATE a package name — only publish new versions of existing ones."
+            exit 1
+          fi
+
           # The tombstone goes FIRST. It is a one-shot publish that retires the
-          # old name, and the guard below makes every later run skip it — but if
-          # it is ever going to run, it should not sit behind the main publish
-          # where a failure there would strand it.
-          for pkg in tombstone .; do
-            NAME=$(node -p "require('./$pkg/package.json').name")
-            VERSION=$(node -p "require('./$pkg/package.json').version")
+          # old name, and the `npm view` guard makes every later run skip it.
+          #
+          # Paths are written with a LEADING ./ deliberately. `npm publish <name>`
+          # treats a bare word as a package SPEC, not a folder — `npm publish
+          # tombstone` resolves and packs the `tombstone` package FROM THE
+          # REGISTRY, i.e. someone else's code, under our account. Measured, not
+          # theoretical. Never drop the ./.
+          for pkg in ./tombstone .; do
+            NAME=$(node -p "require('$pkg/package.json').name")
+            VERSION=$(node -p "require('$pkg/package.json').version")
             if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
-              echo "skip $NAME@$VERSION — already published"
+              echo "skip $NAME@$VERSION - already published"
             else
-              echo "publishing $NAME@$VERSION..."
-              # Publish by PATH from the repo root, never `cd` into the package.
-              # npm resolves project config from the directory of the nearest
-              # package.json and does not walk past it — so inside tombstone/ it
-              # looks for tombstone/.npmrc and never sees the auth config
-              # setup-node wrote at the root. That fails as ENEEDAUTH, which
-              # reads like a missing token rather than a cwd problem.
+              echo "publishing $NAME@$VERSION from $pkg ..."
               npm publish "$pkg" --access public --provenance
             fi
           done
