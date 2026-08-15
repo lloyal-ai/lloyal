@@ -63,7 +63,13 @@ jobs:
               echo "skip $NAME@$VERSION — already published"
             else
               echo "publishing $NAME@$VERSION..."
-              ( cd "$pkg" && npm publish --access public --provenance )
+              # Publish by PATH from the repo root, never `cd` into the package.
+              # npm resolves project config from the directory of the nearest
+              # package.json and does not walk past it — so inside tombstone/ it
+              # looks for tombstone/.npmrc and never sees the auth config
+              # setup-node wrote at the root. That fails as ENEEDAUTH, which
+              # reads like a missing token rather than a cwd problem.
+              npm publish "$pkg" --access public --provenance
             fi
           done
         env:
