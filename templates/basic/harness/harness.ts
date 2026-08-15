@@ -47,7 +47,7 @@ import type { Command, WorkflowEvent } from "./protocol.js";
  * The AgentApps this harness enables. Before enabling, the boot provisions
  * whatever models each app declares (wikipedia needs nothing; corpus/web need a
  * reranker) — so add an installed app's factory here and the model it needs is
- * fetched for you. Install more with `harness.dev install <app>`.
+ * fetched for you. Install more with `lloyal install <app>`.
  */
 export const apps: AppFactory[] = [createWikipediaApp];
 

@@ -24,7 +24,7 @@ describe('dispatcher — unknown command', () => {
     err.restore();
     expect(code).toBe(1);
     expect(err.output()).toContain('unknown command "approve"');
-    expect(err.output()).toContain('harness.dev new approve');
+    expect(err.output()).toContain('lloyal new approve');
   });
 
   it('does not suggest `new` for a flag-like token', async () => {

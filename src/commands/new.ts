@@ -16,11 +16,11 @@ import { verifyAndVendorApp, parseAppSpec } from '../scaffold/vendor-app.js';
 import { runNewWizard, type TemplateKind, type WizardPrefill } from './new-wizard.js';
 
 const USAGE = [
-  'harness.dev new — scaffold a new harness project',
+  'lloyal new — scaffold a new harness project',
   '',
   'Usage:',
-  '  npx harness.dev new                         Interactive: name → targets → model → template',
-  '  npx harness.dev new <name> [options]        Non-interactive (flags below)',
+  '  npx lloyal new                         Interactive: name → targets → model → template',
+  '  npx lloyal new <name> [options]        Non-interactive (flags below)',
   '',
   'Arguments:',
   '  <name>        Harness project name — also the directory created. Omit it in a',
@@ -43,7 +43,7 @@ const USAGE = [
   '                default in an interactive terminal).',
   '  --skip-apps   Do not fetch the template\'s default AgentApp(s). The scaffold',
   '                then does NOT typecheck or run until you add them with',
-  '                `npx harness.dev install <spec>` — use it only for an offline',
+  '                `npx lloyal install <spec>` — use it only for an offline',
   '                or hermetic scaffold.',
   '  -y, --yes     Skip the picker; accept defaults for anything not given a flag.',
   '  -h, --help    Show this help',
@@ -53,13 +53,13 @@ const USAGE = [
   '(fetched + verified on first run — no API key), then prints how to run each one.',
 ].join('\n');
 
-// Same grammar as `harness.dev app:new`: identifier-safe lowercase that
+// Same grammar as `lloyal app:new`: identifier-safe lowercase that
 // satisfies both directory and npm package-name conventions.
 const NAME_RE = /^[a-z][a-z0-9_-]{1,63}$/;
 const ALL_TARGETS: Target[] = ['cli', 'desktop', 'web'];
 
 /**
- * The signed AgentApp(s) each template runs by default, as `harness.dev install`
+ * The signed AgentApp(s) each template runs by default, as `lloyal install`
  * specs (pinned for reproducibility). `new` fetches + Ed25519-verifies these and
  * vendors them as local `file:` deps — the SAME verified path as an explicitly
  * added app. The app is NOT a remote-URL npm dependency in the template
@@ -124,7 +124,7 @@ export const newCommand: Command = {
       return 1;
     }
 
-    // Interactive picker: a bare `harness.dev new` in a real terminal. A provided
+    // Interactive picker: a bare `lloyal new` in a real terminal. A provided
     // name, `--yes`, or a non-TTY (CI, or stdin/stdout redirected) takes the flag
     // path below — Ink needs BOTH stdin and stdout to be a TTY, else its
     // keyboard/render UX is broken (piped output would get ANSI garbage). Any
@@ -172,7 +172,7 @@ function validateFlags(values: {
   let template: TemplateKind | undefined;
   if (values.template != null) {
     if (values.template !== 'basic' && values.template !== 'research') {
-      return { error: `harness.dev: invalid --template "${values.template}" — expected "basic" or "research".` };
+      return { error: `lloyal: invalid --template "${values.template}" — expected "basic" or "research".` };
     }
     template = values.template;
   }
@@ -180,7 +180,7 @@ function validateFlags(values: {
   let targets: Target[] | undefined;
   if (values.targets != null) {
     const parsed = parseTargets(values.targets);
-    if ('error' in parsed) return { error: `harness.dev: ${parsed.error}` };
+    if ('error' in parsed) return { error: `lloyal: ${parsed.error}` };
     targets = parsed.targets;
   }
 
@@ -197,10 +197,10 @@ function planFromFlags(
   flags: Flags,
 ): ScaffoldPlan | { error: string; usage?: boolean } {
   if (!name) {
-    return { error: 'harness.dev: missing harness <name>', usage: true };
+    return { error: 'lloyal: missing harness <name>', usage: true };
   }
   if (!NAME_RE.test(name)) {
-    return { error: `harness.dev: invalid <name> "${name}" — expected [a-z][a-z0-9_-]{1,63}.` };
+    return { error: `lloyal: invalid <name> "${name}" — expected [a-z][a-z0-9_-]{1,63}.` };
   }
 
   return {
@@ -238,13 +238,13 @@ async function performScaffold(
   try {
     statSync(dest);
     process.stderr.write(
-      `harness.dev: ${dest} already exists. Choose a different name or remove it first.\n`,
+      `lloyal: ${dest} already exists. Choose a different name or remove it first.\n`,
     );
     return 1;
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
       process.stderr.write(
-        `harness.dev: cannot access ${dest}: ${err instanceof Error ? err.message : String(err)}\n`,
+        `lloyal: cannot access ${dest}: ${err instanceof Error ? err.message : String(err)}\n`,
       );
       return 1;
     }
@@ -276,7 +276,7 @@ async function performScaffold(
     writeReadmeRunSteps(dest, plan.targets);
   } catch (err) {
     process.stderr.write(
-      `harness.dev: scaffold failed: ${err instanceof Error ? err.message : String(err)}\n`,
+      `lloyal: scaffold failed: ${err instanceof Error ? err.message : String(err)}\n`,
     );
     return 1;
   }
@@ -293,7 +293,7 @@ async function performScaffold(
   // the user's OWN `npm install` still leaves a project that fails typecheck and
   // cannot boot. Only --skip-apps opts out. A network/verify failure warns +
   // continues (an offline scaffold is still a scaffold) and the spec is reported
-  // as pending so the user can add it with `harness.dev install`.
+  // as pending so the user can add it with `lloyal install`.
   const pendingApps: string[] = [];
   if (opts.vendorApps) {
     for (const rawSpec of defaultApps) {
@@ -302,7 +302,7 @@ async function performScaffold(
         process.stdout.write(`  vendored ${v.name}@${v.version} → ${v.vendorRelPath}\n`);
       } catch (err) {
         process.stderr.write(
-          `harness.dev: could not fetch default app ${rawSpec}: ${err instanceof Error ? err.message : String(err)}\n`,
+          `lloyal: could not fetch default app ${rawSpec}: ${err instanceof Error ? err.message : String(err)}\n`,
         );
         pendingApps.push(rawSpec);
       }

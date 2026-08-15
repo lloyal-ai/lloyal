@@ -30,14 +30,14 @@ describe('bin/run.js entrypoint (invoked via a bin symlink)', () => {
 
   function symlinkedBin(): string {
     const dir = mkdtempSync(join(tmpdir(), 'hd-bin-'));
-    const link = join(dir, 'harness.dev'); // basename differs from the target, like a real bin
+    const link = join(dir, 'lloyal'); // basename differs from the target, like a real bin
     symlinkSync(binRun, link);
     return link;
   }
 
   it('--help dispatches through the symlink (does not silently no-op)', () => {
     const out = execFileSync('node', [symlinkedBin(), '--help'], { encoding: 'utf8' });
-    expect(out).toContain('harness.dev');
+    expect(out).toContain('lloyal');
     expect(out).toMatch(/Scaffold/);
   });
 

@@ -99,10 +99,10 @@ export function assertSharedViewLayout(projectDir: string): void {
   );
   if (!hasDom || existsSync(join(projectDir, SHARED_RENDERER_DIR))) return;
   throw new Error(
-    'this project predates harness.dev 0.9 — its React view is still inside ' +
+    'this project predates lloyal 0.9 — its React view is still inside ' +
       '`targets/desktop/`, but the `targets:` verbs now expect `targets/_shared/`.\n' +
       '  0.9 moved the shared view so that removing desktop stops breaking the web build.\n' +
-      '  There is no migration path. Scaffold a fresh project with `npx harness.dev new` ' +
+      '  There is no migration path. Scaffold a fresh project with `npx lloyal new` ' +
       'and copy your `harness/` (and your view) across.',
   );
 }

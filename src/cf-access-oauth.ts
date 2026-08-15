@@ -1,12 +1,12 @@
 /**
- * Embedded Cloudflare Access OAuth client for `harness.dev publish`.
+ * Embedded Cloudflare Access OAuth client for `lloyal publish`.
  *
  * Implements RFC 8252 (OAuth 2.0 for native apps — loopback redirect URI),
  * RFC 7636 (PKCE), RFC 7591 (dynamic client registration), and RFC 9728
  * (OAuth 2.0 protected resource metadata discovery) against Cloudflare
  * Access's Managed OAuth endpoints.
  *
- * This module exists so external app developers running `harness.dev
+ * This module exists so external app developers running `lloyal
  * publish` do not need to install a separate vendor CLI (`cloudflared`)
  * just to authenticate. Everything here uses Node built-ins only.
  *
@@ -296,7 +296,7 @@ export async function runLoopbackOAuth(endpoints: AuthServerEndpoints): Promise<
   authUrl.searchParams.set('resource', endpoints.resource);
 
   process.stderr.write(
-    `harness.dev publish: opening browser for Cloudflare Access SSO...\n` +
+    `lloyal publish: opening browser for Cloudflare Access SSO...\n` +
       `  If the browser doesn't open automatically, visit:\n  ${authUrl.toString()}\n`,
   );
 

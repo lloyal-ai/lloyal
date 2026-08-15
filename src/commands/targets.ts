@@ -40,10 +40,10 @@ function asMessage(err: unknown): string {
 // ── targets:add ───────────────────────────────────────────────────────────────
 
 const ADD_USAGE = [
-  'harness.dev targets:add — add a run surface to the current project',
+  'lloyal targets:add — add a run surface to the current project',
   '',
   'Usage:',
-  '  npx harness.dev targets:add <desktop|web>',
+  '  npx lloyal targets:add <desktop|web>',
   '',
   'Copies the surface (dir + build config + deps + tsconfig entries) back from the',
   'template this project was scaffolded from. The reverse of removing it.',
@@ -79,7 +79,7 @@ export const targetsAddCommand: Command = {
       );
       return 0;
     } catch (err) {
-      process.stderr.write(`harness.dev targets:add: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal targets:add: ${asMessage(err)}\n`);
       return 1;
     }
   },
@@ -88,10 +88,10 @@ export const targetsAddCommand: Command = {
 // ── targets:remove ────────────────────────────────────────────────────────────
 
 const REMOVE_USAGE = [
-  'harness.dev targets:remove — remove a run surface from the current project',
+  'lloyal targets:remove — remove a run surface from the current project',
   '',
   'Usage:',
-  '  npx harness.dev targets:remove <desktop|web> [--yes]',
+  '  npx lloyal targets:remove <desktop|web> [--yes]',
   '',
   'Deletes the surface dir + its scripts/deps/tsconfig entries. Destructive —',
   'prompts for confirmation (pass --yes to skip, required in a non-interactive shell).',
@@ -132,7 +132,7 @@ export const targetsRemoveCommand: Command = {
       process.stdout.write(`removed ${target} → targets: [${remaining.join(', ')}]\n`);
       return 0;
     } catch (err) {
-      process.stderr.write(`harness.dev targets:remove: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal targets:remove: ${asMessage(err)}\n`);
       return 1;
     }
   },
@@ -141,10 +141,10 @@ export const targetsRemoveCommand: Command = {
 // ── targets:list ──────────────────────────────────────────────────────────────
 
 const LIST_USAGE = [
-  'harness.dev targets:list — show the run surfaces present in the current project',
+  'lloyal targets:list — show the run surfaces present in the current project',
   '',
   'Usage:',
-  '  npx harness.dev targets:list',
+  '  npx lloyal targets:list',
 ].join('\n');
 
 export const targetsListCommand: Command = {
@@ -167,7 +167,7 @@ export const targetsListCommand: Command = {
       process.stdout.write(`${out.join('\n')}\n`);
       return 0;
     } catch (err) {
-      process.stderr.write(`harness.dev targets:list: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal targets:list: ${asMessage(err)}\n`);
       return 1;
     }
   },

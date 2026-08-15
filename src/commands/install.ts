@@ -12,15 +12,15 @@ import {
 } from '../scaffold/vendor-app.js';
 
 const USAGE = [
-  'harness.dev install — install a signed HDK app from apps.lloyal.ai into the current project',
+  'lloyal install — install a signed HDK app from apps.lloyal.ai into the current project',
   '',
   'Usage:',
-  '  npx harness.dev install [--allow-scripts] <publisher>/<name>[@<semver>]',
+  '  npx lloyal install [--allow-scripts] <publisher>/<name>[@<semver>]',
   '',
   'Examples:',
-  '  harness.dev install lloyal/web',
-  '  harness.dev install lloyal/corpus@^1.0.0',
-  '  harness.dev install acme/jira@1.2.3',
+  '  lloyal install lloyal/web',
+  '  lloyal install lloyal/corpus@^1.0.0',
+  '  lloyal install acme/jira@1.2.3',
   '',
   'Options:',
   '  --allow-scripts   Permit the installed package\'s preinstall/postinstall hooks to run.',
@@ -42,7 +42,7 @@ const USAGE = [
   '  5. Write the VERIFIED tarball + its signed manifest into `vendor/<pub>__<name>-<ver>.tgz`',
   '     and point package.json at it with a `file:` dependency. Commit `vendor/` so CI',
   '     reproduces the install offline with plain `npm ci` — no remote fetch, no',
-  '     harness.dev, no `--allow-remote`.',
+  '     lloyal, no `--allow-remote`.',
   '  6. Run `npm install [--ignore-scripts]` so npm materializes the local `file:` dep',
   '     into node_modules and records it in package-lock.json.',
   '  7. Audit: confirm npm installed the package and — if npm recorded an integrity for',
@@ -70,13 +70,13 @@ export const installCommand: Command = {
     }
 
     if (positionals.length === 0) {
-      process.stderr.write('harness.dev install: missing <name>[@<semver>] argument\n\n');
+      process.stderr.write('lloyal install: missing <name>[@<semver>] argument\n\n');
       process.stderr.write(`${USAGE}\n`);
       return 1;
     }
     if (positionals.length > 1) {
       process.stderr.write(
-        `harness.dev install: expected exactly one <name>[@<semver>] argument, got ${positionals.length}\n`,
+        `lloyal install: expected exactly one <name>[@<semver>] argument, got ${positionals.length}\n`,
       );
       return 1;
     }
@@ -86,7 +86,7 @@ export const installCommand: Command = {
       spec = parseAppSpec(positionals[0]);
     } catch (err) {
       if (err instanceof InvalidAppSpecError) {
-        process.stderr.write(`harness.dev install: ${err.message}\n`);
+        process.stderr.write(`lloyal install: ${err.message}\n`);
         return 1;
       }
       throw err;
@@ -100,12 +100,12 @@ export const installCommand: Command = {
     try {
       vendored = await verifyAndVendorApp(process.cwd(), spec, { disclose: true });
     } catch (err) {
-      process.stderr.write(`harness.dev install: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal install: ${asMessage(err)}\n`);
       return 1;
     }
 
     process.stderr.write(
-      `harness.dev install: verified ${vendored.name}@${vendored.version} → ${vendored.vendorRelPath}\n`,
+      `lloyal install: verified ${vendored.name}@${vendored.version} → ${vendored.vendorRelPath}\n`,
     );
 
     // 6. Materialize the local `file:` dep into node_modules + package-lock.json.
@@ -113,12 +113,12 @@ export const installCommand: Command = {
     const npmArgs = ['install', ...(allowScripts ? [] : ['--ignore-scripts'])];
 
     process.stderr.write(
-      `harness.dev install: running \`npm ${npmArgs.join(' ')}\` in ${process.cwd()}...\n`,
+      `lloyal install: running \`npm ${npmArgs.join(' ')}\` in ${process.cwd()}...\n`,
     );
 
     const npmExit = await runNpm(npmArgs);
     if (npmExit !== 0) {
-      process.stderr.write(`harness.dev install: npm install exited ${npmExit}\n`);
+      process.stderr.write(`lloyal install: npm install exited ${npmExit}\n`);
       await rollback(vendored);
       return npmExit;
     }
@@ -131,7 +131,7 @@ export const installCommand: Command = {
       audit = await auditInstall(vendored.importName);
     } catch (err) {
       process.stderr.write(
-        `harness.dev install: audit failed — ${asMessage(err)}. Rolling back.\n`,
+        `lloyal install: audit failed — ${asMessage(err)}. Rolling back.\n`,
       );
       await rollback(vendored);
       return 1;
@@ -139,7 +139,7 @@ export const installCommand: Command = {
 
     if (audit === null) {
       process.stderr.write(
-        `harness.dev install: package-lock.json is required for a reproducible install but ` +
+        `lloyal install: package-lock.json is required for a reproducible install but ` +
           `is absent. Run \`npm config set package-lock true\` (or drop \`--no-package-lock\`) ` +
           `and re-run. Rolling back.\n`,
       );
@@ -154,7 +154,7 @@ export const installCommand: Command = {
     // failure, only a divergent one is.
     if (audit.integrity !== null && audit.integrity !== vendored.integrity) {
       process.stderr.write(
-        `harness.dev install: integrity mismatch — npm-installed bytes did not match ` +
+        `lloyal install: integrity mismatch — npm-installed bytes did not match ` +
           `the bytes we verified. Rolling back.\n` +
           `  expected: ${vendored.integrity}\n` +
           `  actual:   ${audit.integrity}\n`,

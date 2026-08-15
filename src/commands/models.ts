@@ -48,10 +48,10 @@ function asMessage(err: unknown): string {
 // ── models:use ──────────────────────────────────────────────────────────────
 
 const USE_USAGE = [
-  'harness.dev models:use — pin a catalog model by id',
+  'lloyal models:use — pin a catalog model by id',
   '',
   'Usage:',
-  '  npx harness.dev models:use <id> [--role llm|reranker]',
+  '  npx lloyal models:use <id> [--role llm|reranker]',
   '',
   'Writes `model.<role>.id` in harness.yml. The model is fetched + digest-verified',
   'from the catalog on the next run (no API key). For a local .gguf you already',
@@ -73,21 +73,21 @@ export const modelsUseCommand: Command = {
       const root = harnessProjectRoot();
       const role = parseRole(values.role);
       const id = positionals[0];
-      if (!id) throw new Error('missing <id>. Usage: harness.dev models:use <id> [--role]');
+      if (!id) throw new Error('missing <id>. Usage: lloyal models:use <id> [--role]');
       if (isModelPath(id)) {
-        throw new Error(`"${id}" looks like a path — use \`harness.dev models:add ${id}\` for a BYO .gguf.`);
+        throw new Error(`"${id}" looks like a path — use \`lloyal models:add ${id}\` for a BYO .gguf.`);
       }
       if (!modelsForRole(role).some((m) => m.id === id)) {
         process.stderr.write(
           `note: "${id}" is not in the vendored catalog for role ${role}; it will fail-closed on ` +
-            'fetch if it is not a real catalog id. Run `harness.dev models:list` to see known ids.\n',
+            'fetch if it is not a real catalog id. Run `lloyal models:list` to see known ids.\n',
         );
       }
       writeModelField(root, role, { id });
       process.stdout.write(`model.${role}.id = ${id}\n`);
       return 0;
     } catch (err) {
-      process.stderr.write(`harness.dev models:use: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal models:use: ${asMessage(err)}\n`);
       return 1;
     }
   },
@@ -96,10 +96,10 @@ export const modelsUseCommand: Command = {
 // ── models:add ──────────────────────────────────────────────────────────────
 
 const ADD_USAGE = [
-  'harness.dev models:add — register a local .gguf you already have',
+  'lloyal models:add — register a local .gguf you already have',
   '',
   'Usage:',
-  '  npx harness.dev models:add <path> [--role llm|reranker]',
+  '  npx lloyal models:add <path> [--role llm|reranker]',
   '',
   'Writes `model.<role>.path` in harness.yml. The file is trusted by possession',
   '(not catalog-digest-verified). Relative paths resolve from the project root.',
@@ -120,7 +120,7 @@ export const modelsAddCommand: Command = {
       const root = harnessProjectRoot();
       const role = parseRole(values.role);
       const path = positionals[0];
-      if (!path) throw new Error('missing <path>. Usage: harness.dev models:add <path> [--role]');
+      if (!path) throw new Error('missing <path>. Usage: lloyal models:add <path> [--role]');
       // Warn (don't block) if the file isn't there yet — trusted by possession,
       // but a typo is worth flagging before the next run fails to load.
       // `isAbsolute` is platform-aware (handles Windows drive/UNC paths); `~`
@@ -133,7 +133,7 @@ export const modelsAddCommand: Command = {
       process.stdout.write(`model.${role}.path = ${path}\n`);
       return 0;
     } catch (err) {
-      process.stderr.write(`harness.dev models:add: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal models:add: ${asMessage(err)}\n`);
       return 1;
     }
   },
@@ -142,10 +142,10 @@ export const modelsAddCommand: Command = {
 // ── models:download ───────────────────────────────────────────────────────────
 
 const DOWNLOAD_USAGE = [
-  'harness.dev models:download — fetch a .gguf from a URL into models/<role>/',
+  'lloyal models:download — fetch a .gguf from a URL into models/<role>/',
   '',
   'Usage:',
-  '  npx harness.dev models:download <url> [--role llm|reranker] [--sha256 <hex>]',
+  '  npx lloyal models:download <url> [--role llm|reranker] [--sha256 <hex>]',
   '',
   'Streams the weight to models/<role>/<file>.gguf and pins it as model.<role>.path.',
   'A URL download is TRUSTED BY SOURCE — pass --sha256 to verify the bytes',
@@ -171,7 +171,7 @@ export const modelsDownloadCommand: Command = {
       const root = harnessProjectRoot();
       const role = parseRole(values.role);
       const url = positionals[0];
-      if (!url) throw new Error('missing <url>. Usage: harness.dev models:download <url> [--role] [--sha256]');
+      if (!url) throw new Error('missing <url>. Usage: lloyal models:download <url> [--role] [--sha256]');
       const expectedSha = values.sha256?.trim().toLowerCase();
 
       const fileName = fileNameFromUrl(url);
@@ -197,7 +197,7 @@ export const modelsDownloadCommand: Command = {
       );
       return 0;
     } catch (err) {
-      process.stderr.write(`harness.dev models:download: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal models:download: ${asMessage(err)}\n`);
       return 1;
     }
   },
@@ -206,10 +206,10 @@ export const modelsDownloadCommand: Command = {
 // ── models:list ───────────────────────────────────────────────────────────────
 
 const LIST_USAGE = [
-  'harness.dev models:list — show catalog ids, the active pins, and installed files',
+  'lloyal models:list — show catalog ids, the active pins, and installed files',
   '',
   'Usage:',
-  '  npx harness.dev models:list',
+  '  npx lloyal models:list',
 ].join('\n');
 
 export const modelsListCommand: Command = {
@@ -255,7 +255,7 @@ export const modelsListCommand: Command = {
       process.stdout.write(`${out.join('\n')}\n`);
       return 0;
     } catch (err) {
-      process.stderr.write(`harness.dev models:list: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal models:list: ${asMessage(err)}\n`);
       return 1;
     }
   },

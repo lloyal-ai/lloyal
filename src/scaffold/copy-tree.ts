@@ -43,7 +43,7 @@ export function buildSubstitutions(name: string): Record<string, string> {
  * npm silently drops a nested `.gitignore` from the published tarball — even
  * when it is named explicitly in `files` — so a template that stores one under
  * its real name ships it to anyone running from a git checkout and to NOBODY
- * running `npx harness.dev`. Store it undotted in the template and restore the
+ * running `npx lloyal`. Store it undotted in the template and restore the
  * dot here, so the published CLI and the repo emit the same tree.
  */
 const DOTFILES: Record<string, string> = {

@@ -1,7 +1,7 @@
 /**
  * Verify a signed HDK app and materialize it as a LOCAL `file:` tarball
- * dependency — the shared primitive behind `harness.dev install` (add-on apps)
- * and `harness.dev new` (a template's default app).
+ * dependency — the shared primitive behind `lloyal install` (add-on apps)
+ * and `lloyal new` (a template's default app).
  *
  * **Why not `npm install <url>`.** npm 12 (default since 2026) refuses to
  * resolve a dependency from a remote URL/HTTPS tarball unless `--allow-remote`
@@ -111,7 +111,7 @@ export interface VendorOptions {
  * write failure — the vendored bytes become the source of truth, so there is no
  * silent fallback to a remote fetch. Returns the resolved coordinates.
  *
- * Mirrors `harness.dev install`'s verify chain step-for-step; the ONLY
+ * Mirrors `lloyal install`'s verify chain step-for-step; the ONLY
  * difference from the old flow is the final materialization (local `file:` dep
  * instead of `npm install <remote-url>`).
  */
@@ -157,7 +157,7 @@ export async function verifyAndVendorApp(
     throw new BundleVerificationError(
       `manifest integrity ${manifest.integrity} does not match sha512 of received ` +
         `tarball bytes ${integrity}. This indicates a signing-pipeline bug — file an ` +
-        `issue at https://github.com/lloyal-ai/hdk.`,
+        `issue at https://github.com/lloyal-ai/lloyal.`,
     );
   }
 

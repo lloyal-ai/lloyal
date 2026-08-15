@@ -17,7 +17,7 @@
  * drop a `prompts/<name>.eta` into the project to override a tuned prompt.
  *
  * SNAPSHOT: reasoning.run @ 0.8.0 — a curated separate copy of its pipeline,
- * conforming to the harness.dev new conventions. Drift from upstream is
+ * conforming to the lloyal new conventions. Drift from upstream is
  * expected and accepted.
  */
 import * as fs from "node:fs";
@@ -64,7 +64,7 @@ import { resolvePath } from "./path-utils.js";
 // boot's `provisionAppModels` reads whatever Services each app declares
 // (corpus/web both declare `services: ['reranker']`), resolves + loads the
 // backing model, and publishes it on `RerankerCtx` — so the harness stays IO-free.
-// Install more with `harness.dev install <app>` and add the factory here.
+// Install more with `lloyal install <app>` and add the factory here.
 export const apps: AppFactory[] = [createCorpusApp, createWebApp];
 
 const WEB_APP = "web";

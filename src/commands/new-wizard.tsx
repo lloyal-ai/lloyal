@@ -168,7 +168,7 @@ function Banner(): ReactElement {
       <BigMark />
       <Box width="100%" justifyContent="space-between" marginTop={1}>
         <Box gap={2}>
-          <GradientWord text="harness.dev" bold />
+          <GradientWord text="lloyal" bold />
           <Text dimColor>rails new for agentic AI apps</Text>
         </Box>
         <Text dimColor>v{VERSION}</Text>

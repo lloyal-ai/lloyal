@@ -14,7 +14,7 @@ export function harnessProjectRoot(): string {
   if (!existsSync(join(cwd, 'harness.yml'))) {
     throw new Error(
       'not a harness project — no harness.yml in the current directory. Run this ' +
-        'from your harness project root (where `harness.dev new` scaffolded it).',
+        'from your harness project root (where `lloyal new` scaffolded it).',
     );
   }
   return cwd;

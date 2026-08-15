@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * harness.dev — entrypoint for `npx harness.dev` and a global install.
+ * lloyal — entrypoint for `npx lloyal` and a global install.
  *
  * A dumb shim: load the built CLI library and run it. Keeping the bin separate
  * from the library (`dist/cli.js`) is what makes it robust — the shim runs

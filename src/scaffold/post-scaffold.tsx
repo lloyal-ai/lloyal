@@ -150,7 +150,7 @@ export function printNextSteps(opts: {
       '',
       `  ${c(`${ACCENT_SGR};1`, `Required — this harness imports ${pending.length > 1 ? 'these apps' : 'this app'}:`)}`,
     );
-    for (const spec of pending) lines.push(`    ${amber(`npx harness.dev install ${spec}`)}`);
+    for (const spec of pending) lines.push(`    ${amber(`npx lloyal install ${spec}`)}`);
     lines.push(`  ${dim('Until then the project will not typecheck or start.')}`);
   } else if (!opts.installed) {
     lines.push(`  ${dim('npm install')}`);
@@ -163,7 +163,7 @@ export function printNextSteps(opts: {
   }
   lines.push('');
   lines.push(`  ${dim('First run fetches + digest-verifies the model — no API key.')}`);
-  lines.push(`  ${dim('Add apps:  npx harness.dev install <publisher>/<name>')}`);
+  lines.push(`  ${dim('Add apps:  npx lloyal install <publisher>/<name>')}`);
   lines.push('');
   process.stdout.write(`${lines.join('\n')}\n`);
 }

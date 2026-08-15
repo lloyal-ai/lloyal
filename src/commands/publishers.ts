@@ -12,11 +12,11 @@ const TOS_URL = 'https://docs.lloyal.ai/licensing/publisher-tos';
 const CURRENT_TOS_VERSION = 'v1';
 
 const USAGE = [
-  'harness.dev publishers — manage your publisher account on apps.lloyal.ai',
+  'lloyal publishers — manage your publisher account on apps.lloyal.ai',
   '',
   'Usage:',
-  '  npx harness.dev publishers register --handle <handle> [--yes]',
-  '  npx harness.dev publishers me',
+  '  npx lloyal publishers register --handle <handle> [--yes]',
+  '  npx lloyal publishers me',
   '',
   'Subcommands:',
   '  register   Claim a publisher handle + attest the publisher ToS.',
@@ -51,7 +51,7 @@ export const publishersCommand: Command = {
     const rest = argv.slice(1);
     if (sub === 'register') return runRegister(rest);
     if (sub === 'me') return runMe(rest);
-    process.stderr.write(`harness.dev publishers: unknown subcommand "${sub}"\n\n${USAGE}\n`);
+    process.stderr.write(`lloyal publishers: unknown subcommand "${sub}"\n\n${USAGE}\n`);
     return 1;
   },
 };
@@ -71,12 +71,12 @@ async function runRegister(argv: readonly string[]): Promise<number> {
     return 0;
   }
   if (typeof values.handle !== 'string' || values.handle.length === 0) {
-    process.stderr.write('harness.dev publishers register: --handle <handle> is required\n');
+    process.stderr.write('lloyal publishers register: --handle <handle> is required\n');
     return 1;
   }
   if (!/^[a-z][a-z0-9_-]{1,63}$/.test(values.handle)) {
     process.stderr.write(
-      `harness.dev publishers register: invalid handle "${values.handle}" — expected ` +
+      `lloyal publishers register: invalid handle "${values.handle}" — expected ` +
         '`[a-z][a-z0-9_-]{1,63}`.\n',
     );
     return 1;
@@ -85,7 +85,7 @@ async function runRegister(argv: readonly string[]): Promise<number> {
   // Service Tokens (CI) cannot register; require a TTY for the OAuth flow.
   if (process.env.CF_ACCESS_CLIENT_ID && process.env.CF_ACCESS_CLIENT_SECRET) {
     process.stderr.write(
-      'harness.dev publishers register: Service Tokens cannot register publisher accounts. ' +
+      'lloyal publishers register: Service Tokens cannot register publisher accounts. ' +
         'Register from an interactive session first; CI automation can then publish with ' +
         'a Service Token bound to the registered identity.\n',
     );
@@ -93,7 +93,7 @@ async function runRegister(argv: readonly string[]): Promise<number> {
   }
   if (!process.stdin.isTTY) {
     process.stderr.write(
-      'harness.dev publishers register: stdin is not a TTY — interactive Cloudflare Access ' +
+      'lloyal publishers register: stdin is not a TTY — interactive Cloudflare Access ' +
         'SSO is required for registration. Run from a terminal session.\n',
     );
     return 1;
@@ -108,7 +108,7 @@ async function runRegister(argv: readonly string[]): Promise<number> {
   if (!values.yes) {
     const accepted = await promptYesNo('Accept the publisher ToS? [y/N] ');
     if (!accepted) {
-      process.stderr.write('harness.dev publishers register: ToS not accepted; aborting\n');
+      process.stderr.write('lloyal publishers register: ToS not accepted; aborting\n');
       return 1;
     }
   }
@@ -117,7 +117,7 @@ async function runRegister(argv: readonly string[]): Promise<number> {
   try {
     accessToken = await ensureFreshToken(REGISTER_ENDPOINT);
   } catch (err) {
-    process.stderr.write(`harness.dev publishers register: ${asMessage(err)}\n`);
+    process.stderr.write(`lloyal publishers register: ${asMessage(err)}\n`);
     return 1;
   }
 
@@ -142,7 +142,7 @@ async function runRegister(argv: readonly string[]): Promise<number> {
   };
   if (!res.ok) {
     process.stderr.write(
-      `harness.dev publishers register: HTTP ${res.status} ${res.statusText}\n` +
+      `lloyal publishers register: HTTP ${res.status} ${res.statusText}\n` +
         `  error: ${body.error ?? '(no error code)'}\n` +
         (body.currentTosVersion
           ? `  currentTosVersion: ${body.currentTosVersion}\n`
@@ -179,7 +179,7 @@ async function runMe(argv: readonly string[]): Promise<number> {
       const token = await ensureFreshToken(ME_ENDPOINT);
       headers = { Authorization: `Bearer ${token}` };
     } catch (err) {
-      process.stderr.write(`harness.dev publishers me: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal publishers me: ${asMessage(err)}\n`);
       return 1;
     }
   }
@@ -187,14 +187,14 @@ async function runMe(argv: readonly string[]): Promise<number> {
   const res = await httpFetch(ME_ENDPOINT, { headers });
   if (res.status === 404) {
     process.stderr.write(
-      'harness.dev publishers me: no publisher account for this identity. ' +
-        'Run `harness.dev publishers register --handle <handle>` first.\n',
+      'lloyal publishers me: no publisher account for this identity. ' +
+        'Run `lloyal publishers register --handle <handle>` first.\n',
     );
     return 1;
   }
   if (!res.ok) {
     const body = await res.text();
-    process.stderr.write(`harness.dev publishers me: HTTP ${res.status}\n${body}\n`);
+    process.stderr.write(`lloyal publishers me: HTTP ${res.status}\n${body}\n`);
     return 1;
   }
   const me = (await res.json()) as {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `harness.dev` — the Harness Development Kit CLI.
+ * `lloyal` — the Harness Development Kit CLI.
  *
  * Thin dispatcher. The first token selects a command by name (`new`,
  * `app:new`, `install`, …); an unknown token is an ERROR, never a silent
@@ -8,9 +8,9 @@
  * Global `--help` / `--version` are handled here; all other flag parsing
  * belongs to the individual command.
  *
- * The package and the bin share the name `harness.dev`, so the
- * invocation is identical whether run via `npx harness.dev …` or as the
- * globally-installed `harness.dev …` command.
+ * The package and the bin share the name `lloyal`, so the
+ * invocation is identical whether run via `npx lloyal …` or as the
+ * globally-installed `lloyal …` command.
  *
  * @packageDocumentation
  */
@@ -29,39 +29,39 @@ function version(): string {
 function printHelp(): void {
   process.stdout.write(
     [
-      'harness.dev — Harness Development Kit CLI',
+      'lloyal — Harness Development Kit CLI',
       '',
       'Scaffold:',
-      '  npx harness.dev new [name]           Scaffold a new harness (interactive if no name)',
-      '  npx harness.dev new --template research       Start from the tuned research template',
-      '  npx harness.dev app:new <name>       Scaffold a new app',
+      '  npx lloyal new [name]           Scaffold a new harness (interactive if no name)',
+      '  npx lloyal new --template research       Start from the tuned research template',
+      '  npx lloyal app:new <name>       Scaffold a new app',
       '',
       'Manage models (in a project):',
-      '  npx harness.dev models:use <id> [--role llm|reranker]   Pin a catalog model',
-      '  npx harness.dev models:add <path> [--role]              Register a local .gguf (BYO)',
-      '  npx harness.dev models:download <url> [--role] [--sha256 <hex>]  Fetch a .gguf by URL',
-      '  npx harness.dev models:list          Catalog ids, active pins, installed files',
+      '  npx lloyal models:use <id> [--role llm|reranker]   Pin a catalog model',
+      '  npx lloyal models:add <path> [--role]              Register a local .gguf (BYO)',
+      '  npx lloyal models:download <url> [--role] [--sha256 <hex>]  Fetch a .gguf by URL',
+      '  npx lloyal models:list          Catalog ids, active pins, installed files',
       '',
       'Manage targets (run surfaces, in a project):',
-      '  npx harness.dev targets:add <desktop|web>      Add a surface back',
-      '  npx harness.dev targets:remove <desktop|web>   Remove a surface',
-      '  npx harness.dev targets:list         Show the surfaces present',
+      '  npx lloyal targets:add <desktop|web>      Add a surface back',
+      '  npx lloyal targets:remove <desktop|web>   Remove a surface',
+      '  npx lloyal targets:list         Show the surfaces present',
       '',
       'Apps + channel:',
-      '  npx harness.dev install <pub>/<name>[@<semver>]   Install a signed app from apps.lloyal.ai',
-      '  npx harness.dev publish              Submit an app for review + signing',
-      '  npx harness.dev publish status <id>  Check the status of a submission',
-      '  npx harness.dev publishers register  Claim a publisher handle + attest ToS',
-      '  npx harness.dev publishers me        Show your publisher record',
-      '  npx harness.dev review <subcommand>  Lloyal-internal review surface',
+      '  npx lloyal install <pub>/<name>[@<semver>]   Install a signed app from apps.lloyal.ai',
+      '  npx lloyal publish              Submit an app for review + signing',
+      '  npx lloyal publish status <id>  Check the status of a submission',
+      '  npx lloyal publishers register  Claim a publisher handle + attest ToS',
+      '  npx lloyal publishers me        Show your publisher record',
+      '  npx lloyal review <subcommand>  Lloyal-internal review surface',
       '',
-      'After `npm i -g harness.dev`, drop the `npx ` prefix.',
+      'After `npm i -g lloyal`, drop the `npx ` prefix.',
       '',
       'Options:',
       '  -h, --help     Show this help',
       '  -v, --version  Print the version',
       '',
-      'Run `npx harness.dev <command> --help` for command-specific options.',
+      'Run `npx lloyal <command> --help` for command-specific options.',
       '',
     ].join('\n'),
   );
@@ -85,11 +85,11 @@ export async function main(argv: readonly string[]): Promise<number> {
   }
 
   // Unknown command → error, NOT a silent scaffold. Scaffolding now requires the
-  // explicit `new` verb (a bare `harness.dev my-harness` used to make a
+  // explicit `new` verb (a bare `lloyal my-harness` used to make a
   // directory, so a mistyped subcommand silently scaffolded one).
-  const suggestion = first.startsWith('-') ? '' : ` Did you mean \`harness.dev new ${first}\`?`;
+  const suggestion = first.startsWith('-') ? '' : ` Did you mean \`lloyal new ${first}\`?`;
   process.stderr.write(
-    `harness.dev: unknown command "${first}".${suggestion} Run \`harness.dev --help\` for usage.\n`,
+    `lloyal: unknown command "${first}".${suggestion} Run \`lloyal --help\` for usage.\n`,
   );
   return 1;
 }

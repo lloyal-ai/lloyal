@@ -15,11 +15,11 @@ const DEFAULT_PUBLISHERS_ME_ENDPOINT = `${API_BASE}/v1/publishers/me`;
 const DEFAULT_SUBMISSION_ENDPOINT_BASE = `${API_BASE}/v1/submissions`;
 
 const USAGE = [
-  'harness.dev publish — submit an HDK app to apps.lloyal.ai for review + signing',
+  'lloyal publish — submit an HDK app to apps.lloyal.ai for review + signing',
   '',
   'Usage:',
-  '  npx harness.dev publish [--dir <path>] [--endpoint <url>]',
-  '  npx harness.dev publish status <submissionId>',
+  '  npx lloyal publish [--dir <path>] [--endpoint <url>]',
+  '  npx lloyal publish status <submissionId>',
   '',
   'Options:',
   '  --dir <path>      App directory (default: cwd)',
@@ -29,7 +29,7 @@ const USAGE = [
   'Flow:',
   '  1. Look up the authenticated publisher via GET /v1/publishers/me to obtain',
   '     the registered handle. If no record exists, the CLI errors with a pointer',
-  '     to `harness.dev publishers register`.',
+  '     to `lloyal publishers register`.',
   '  2. Read app.json + package.json. The catalog `name` is built as',
   '     `<publisher-handle>/<app.json.name>` (auto-prefixed); the npm package',
   '     name from package.json flows through as `importName`. If app.json already',
@@ -46,7 +46,7 @@ const USAGE = [
   '                      auth.json), mode 0600. Subsequent publishes are silent',
   '                      until the grant expires.',
   '',
-  '`harness.dev publish status <id>` polls /v1/submissions/<id> for the current',
+  '`lloyal publish status <id>` polls /v1/submissions/<id> for the current',
   'review state of a previously submitted submission.',
 ].join('\n');
 
@@ -124,12 +124,12 @@ export const publishCommand: Command = {
       const raw = await readFile(join(appDir, 'app.json'), 'utf-8');
       appJson = JSON.parse(raw) as AppJson;
     } catch (err) {
-      process.stderr.write(`harness.dev publish: cannot read ${join(appDir, 'app.json')}: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal publish: cannot read ${join(appDir, 'app.json')}: ${asMessage(err)}\n`);
       return 1;
     }
 
     if (typeof appJson.name !== 'string') {
-      process.stderr.write(`harness.dev publish: app.json "name" is not a string\n`);
+      process.stderr.write(`lloyal publish: app.json "name" is not a string\n`);
       return 1;
     }
     if (
@@ -137,7 +137,7 @@ export const publishCommand: Command = {
       !UNSCOPED_NAME_PATTERN.test(appJson.name)
     ) {
       process.stderr.write(
-        `harness.dev publish: invalid app.json "name" — expected ` +
+        `lloyal publish: invalid app.json "name" — expected ` +
           '`<short-name>` or `<publisher>/<short-name>` matching `[a-z][a-z0-9_-]{1,63}`.\n',
       );
       return 1;
@@ -152,12 +152,12 @@ export const publishCommand: Command = {
       const raw = await readFile(join(appDir, 'package.json'), 'utf-8');
       packageJson = JSON.parse(raw) as PackageJson;
     } catch (err) {
-      process.stderr.write(`harness.dev publish: cannot read ${join(appDir, 'package.json')}: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal publish: cannot read ${join(appDir, 'package.json')}: ${asMessage(err)}\n`);
       return 1;
     }
     if (typeof packageJson.name !== 'string' || packageJson.name.length === 0) {
       process.stderr.write(
-        `harness.dev publish: package.json "name" missing — needed to carry through as importName\n`,
+        `lloyal publish: package.json "name" missing — needed to carry through as importName\n`,
       );
       return 1;
     }
@@ -166,7 +166,7 @@ export const publishCommand: Command = {
       !/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(packageJson.version)
     ) {
       process.stderr.write(
-        `harness.dev publish: invalid package.json "version" (expected semver) — this is the catalog version published as <name>@<version>\n`,
+        `lloyal publish: invalid package.json "version" (expected semver) — this is the catalog version published as <name>@<version>\n`,
       );
       return 1;
     }
@@ -179,7 +179,7 @@ export const publishCommand: Command = {
     try {
       headers = await buildAuthHeaders(endpoint);
     } catch (err) {
-      process.stderr.write(`harness.dev publish: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal publish: ${asMessage(err)}\n`);
       return 1;
     }
 
@@ -187,7 +187,7 @@ export const publishCommand: Command = {
     try {
       publisherHandle = await lookupPublisherHandle(headers);
     } catch (err) {
-      process.stderr.write(`harness.dev publish: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal publish: ${asMessage(err)}\n`);
       return 1;
     }
 
@@ -199,7 +199,7 @@ export const publishCommand: Command = {
     if (scopedNameMatch) {
       if (scopedNameMatch[1] !== publisherHandle) {
         process.stderr.write(
-          `harness.dev publish: app.json "name" is scoped under "${scopedNameMatch[1]}" ` +
+          `lloyal publish: app.json "name" is scoped under "${scopedNameMatch[1]}" ` +
             `but you're registered as "${publisherHandle}". Either change app.json ` +
             `to "${publisherHandle}/${scopedNameMatch[2]}" or drop the prefix.\n`,
         );
@@ -232,7 +232,7 @@ export const publishCommand: Command = {
       // publisher's file. Fail loud BEFORE writing anything.
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
         process.stderr.write(
-          `harness.dev publish: ${surfacePath} exists but could not be read (${asMessage(err)}). ` +
+          `lloyal publish: ${surfacePath} exists but could not be read (${asMessage(err)}). ` +
             `Refusing to overwrite it — remove or fix that path and re-run.\n`,
         );
         return 1;
@@ -250,7 +250,7 @@ export const publishCommand: Command = {
       const surface = await buildAttentionSurface(appDir, appJson, packageJson);
       await writeFile(surfacePath, `${JSON.stringify(surface, null, 2)}\n`);
     } catch (err) {
-      process.stderr.write(`harness.dev publish: could not build attention surface: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal publish: could not build attention surface: ${asMessage(err)}\n`);
       await restoreSurface();
       return 1;
     }
@@ -267,7 +267,7 @@ export const publishCommand: Command = {
       const tarballPath = await npmPack(appDir, packTmpDir);
       tarball = new Uint8Array(await readFile(tarballPath));
     } catch (err) {
-      process.stderr.write(`harness.dev publish: npm pack failed: ${asMessage(err)}\n`);
+      process.stderr.write(`lloyal publish: npm pack failed: ${asMessage(err)}\n`);
       return 1;
     } finally {
       await restoreSurface();
@@ -282,13 +282,13 @@ export const publishCommand: Command = {
       // publisher to fix their `files` array when the real fault is the tarball.
       if (!isGzipReadable(tarball)) {
         process.stderr.write(
-          'harness.dev publish: the produced tarball could not be read (corrupt, or its ' +
+          'lloyal publish: the produced tarball could not be read (corrupt, or its ' +
             'decompressed size exceeds the 64MB inspect cap) — cannot verify attention-surface.json ' +
             'landed. This is unexpected for npm pack output; please file an issue.\n',
         );
       } else {
         process.stderr.write(
-          'harness.dev publish: attention-surface.json was generated but did NOT land in the ' +
+          'lloyal publish: attention-surface.json was generated but did NOT land in the ' +
             'tarball. Add "attention-surface.json" to your package.json "files" array.\n',
         );
       }
@@ -319,13 +319,13 @@ export const publishCommand: Command = {
     form.set('manifest', JSON.stringify(stub));
 
     process.stderr.write(
-      `harness.dev publish: submitting ${stub.name}@${stub.version} (${stub.sizeBytes} bytes) to ${endpoint}...\n`,
+      `lloyal publish: submitting ${stub.name}@${stub.version} (${stub.sizeBytes} bytes) to ${endpoint}...\n`,
     );
 
     const res = await httpFetch(endpoint, { method: 'POST', headers, body: form });
     if (!res.ok) {
       const body = await res.text();
-      process.stderr.write(`harness.dev publish: HTTP ${res.status} ${res.statusText}\n${body}\n`);
+      process.stderr.write(`lloyal publish: HTTP ${res.status} ${res.statusText}\n${body}\n`);
       return 1;
     }
 
@@ -346,14 +346,14 @@ export const publishCommand: Command = {
     if (out.status) process.stdout.write(`  status:     ${out.status}\n`);
     if (out.importName) process.stdout.write(`  import:     ${out.importName}\n`);
     if (out.submittedAt) process.stdout.write(`  submitted:  ${out.submittedAt}\n`);
-    if (out.statusUrl) process.stdout.write(`  poll:       harness.dev publish status ${out.submissionId ?? '<id>'}\n`);
+    if (out.statusUrl) process.stdout.write(`  poll:       lloyal publish status ${out.submissionId ?? '<id>'}\n`);
 
     return 0;
   },
 };
 
 /**
- * `harness.dev publish status <submissionId>` — poll the submission's
+ * `lloyal publish status <submissionId>` — poll the submission's
  * current review state. Used by publishers to see whether their pending
  * submission has been approved or rejected.
  */
@@ -368,12 +368,12 @@ async function runStatus(argv: readonly string[]): Promise<number> {
     return 0;
   }
   if (positionals.length !== 1) {
-    process.stderr.write('harness.dev publish status: expected exactly one <submissionId> argument\n');
+    process.stderr.write('lloyal publish status: expected exactly one <submissionId> argument\n');
     return 1;
   }
   const submissionId = positionals[0];
   if (!/^[0-9a-f-]+$/i.test(submissionId)) {
-    process.stderr.write(`harness.dev publish status: invalid submissionId "${submissionId}"\n`);
+    process.stderr.write(`lloyal publish status: invalid submissionId "${submissionId}"\n`);
     return 1;
   }
   const endpoint = `${DEFAULT_SUBMISSION_ENDPOINT_BASE}/${submissionId}`;
@@ -382,13 +382,13 @@ async function runStatus(argv: readonly string[]): Promise<number> {
   try {
     headers = await buildAuthHeaders(endpoint);
   } catch (err) {
-    process.stderr.write(`harness.dev publish status: ${asMessage(err)}\n`);
+    process.stderr.write(`lloyal publish status: ${asMessage(err)}\n`);
     return 1;
   }
   const res = await httpFetch(endpoint, { headers });
   if (!res.ok) {
     const body = await res.text();
-    process.stderr.write(`harness.dev publish status: HTTP ${res.status}\n${body}\n`);
+    process.stderr.write(`lloyal publish status: HTTP ${res.status}\n${body}\n`);
     return 1;
   }
   const out = (await res.json()) as {
@@ -415,7 +415,7 @@ async function runStatus(argv: readonly string[]): Promise<number> {
 /**
  * GET /v1/publishers/me — return the publisher handle for the
  * authenticated identity. Throws if no record exists (publisher needs
- * to `harness.dev publishers register` first) or if the account is
+ * to `lloyal publishers register` first) or if the account is
  * suspended.
  */
 async function lookupPublisherHandle(
@@ -425,7 +425,7 @@ async function lookupPublisherHandle(
   if (res.status === 404) {
     const body = (await res.json().catch(() => ({}))) as PublisherMeResponse;
     throw new Error(
-      'no publisher account for this identity. Run `harness.dev publishers register --handle <handle>` first.' +
+      'no publisher account for this identity. Run `lloyal publishers register --handle <handle>` first.' +
         (body.registerUrl ? `\n  register: ${body.registerUrl}` : ''),
     );
   }

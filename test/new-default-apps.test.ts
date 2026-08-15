@@ -1,5 +1,5 @@
 /**
- * `harness.dev new` must emit a project that typechecks and boots — which means
+ * `lloyal new` must emit a project that typechecks and boots — which means
  * the template's default AgentApps must be vendored, because each template's
  * `harness/harness.ts` imports them at the top level. The regression this guards
  * is 0.7.1's: vendoring was gated on `process.stdout.isTTY`, so every piped /
@@ -107,8 +107,8 @@ describe('new — default apps are vendored regardless of TTY / --skip-install',
     expect(vendorMock).not.toHaveBeenCalled();
     // The specs are still recorded, so `bin/run.js` can name them at boot.
     expect(marker(dir).apps).toEqual(DEFAULT_APPS.research);
-    expect(stdout).toContain('npx harness.dev install lloyal/corpus@1.3.0');
-    expect(stdout).toContain('npx harness.dev install lloyal/web@1.3.0');
+    expect(stdout).toContain('npx lloyal install lloyal/corpus@1.3.0');
+    expect(stdout).toContain('npx lloyal install lloyal/web@1.3.0');
     expect(stdout).toContain('will not typecheck or start');
   });
 
@@ -116,7 +116,7 @@ describe('new — default apps are vendored regardless of TTY / --skip-install',
     vendorMock.mockRejectedValue(new Error('getaddrinfo ENOTFOUND apps.lloyal.ai'));
     const dir = await scaffold('r4', ['--template', 'research']);
     expect(stderr).toContain('could not fetch default app lloyal/corpus@1.3.0');
-    expect(stdout).toContain('npx harness.dev install lloyal/corpus@1.3.0');
+    expect(stdout).toContain('npx lloyal install lloyal/corpus@1.3.0');
     expect(marker(dir).template).toBe('research'); // the scaffold itself survived
   });
 });
@@ -129,14 +129,14 @@ describe('printNextSteps — pending apps come BEFORE the run commands', () => {
       installed: false,
       pendingApps: ['lloyal/corpus@1.3.0'],
     });
-    const required = stdout.indexOf('npx harness.dev install lloyal/corpus@1.3.0');
+    const required = stdout.indexOf('npx lloyal install lloyal/corpus@1.3.0');
     const runIt = stdout.indexOf('Run it');
     expect(required).toBeGreaterThan(-1);
     expect(runIt).toBeGreaterThan(-1);
     // The 0.7.1 panel printed these the other way round, so following it top-to-
     // bottom ran a project that could not start.
     expect(required).toBeLessThan(runIt);
-    // `harness.dev install` runs npm install itself — a second bare `npm install`
+    // `lloyal install` runs npm install itself — a second bare `npm install`
     // step above it would just be noise.
     expect(stdout).not.toMatch(/^ {2}npm install$/m);
   });

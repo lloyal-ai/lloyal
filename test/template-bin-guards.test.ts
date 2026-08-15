@@ -61,7 +61,7 @@ describe('preflight-apps.js', () => {
     });
     const { status, stderr } = run(dir, 'preflight-apps.js');
     expect(status).toBe(1);
-    expect(stderr).toContain(`npx harness.dev install ${WIKIPEDIA}`);
+    expect(stderr).toContain(`npx lloyal install ${WIKIPEDIA}`);
   });
 
   it('passes when a dependency points at the spec’s vendored tarball', () => {
@@ -87,7 +87,7 @@ describe('preflight-apps.js', () => {
     });
     const { status, stderr } = run(dir, 'preflight-apps.js');
     expect(status).toBe(1);
-    expect(stderr).toContain('npx harness.dev install lloyal/web@1.3.0');
+    expect(stderr).toContain('npx lloyal install lloyal/web@1.3.0');
     expect(stderr).not.toContain('lloyal/corpus@1.3.0');
   });
 
@@ -116,12 +116,12 @@ describe('run.js — classifies ERR_MODULE_NOT_FOUND before advising', () => {
   });
 
   it('an unbuilt dist is a build problem, not a missing AgentApp', () => {
-    // The regression: this path used to print `harness.dev install`, which
+    // The regression: this path used to print `lloyal install`, which
     // cannot fix an unbuilt project.
     const { status, stderr } = run(fixture(withApp()), 'run.js');
     expect(status).toBe(1);
     expect(stderr).toContain('npm run build');
-    expect(stderr).not.toContain('harness.dev install');
+    expect(stderr).not.toContain('lloyal install');
   });
 
   it('a bare specifier absent from dependencies is the AgentApp case', () => {
@@ -131,7 +131,7 @@ describe('run.js — classifies ERR_MODULE_NOT_FOUND before advising', () => {
     const { status, stderr } = run(dir, 'run.js');
     expect(status).toBe(1);
     expect(stderr).toContain('is not a dependency of this project');
-    expect(stderr).toContain(`npx harness.dev install ${WIKIPEDIA}`);
+    expect(stderr).toContain(`npx lloyal install ${WIKIPEDIA}`);
   });
 
   it('a bare specifier that IS a dependency means npm install, not install-app', () => {
@@ -141,7 +141,7 @@ describe('run.js — classifies ERR_MODULE_NOT_FOUND before advising', () => {
     const { status, stderr } = run(dir, 'run.js');
     expect(status).toBe(1);
     expect(stderr).toContain('is a dependency but is not installed');
-    expect(stderr).not.toContain('harness.dev install');
+    expect(stderr).not.toContain('lloyal install');
   });
 
   it('rethrows anything that is not ERR_MODULE_NOT_FOUND', () => {
@@ -151,6 +151,6 @@ describe('run.js — classifies ERR_MODULE_NOT_FOUND before advising', () => {
     const { status, stderr } = run(dir, 'run.js');
     expect(status).toBe(1);
     expect(stderr).toContain('harness boom');
-    expect(stderr).not.toContain('harness.dev install');
+    expect(stderr).not.toContain('lloyal install');
   });
 });

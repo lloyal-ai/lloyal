@@ -12,7 +12,7 @@ const REVIEW_BASE = `${API_BASE}/v1/review`;
  * Submission identifiers are server-issued UUIDs. Validate the shape
  * client-side before any network call so typos fail fast without leaking
  * arbitrary positional input into URL paths. Pattern matches the loose
- * shape used by `harness.dev publish status` for cross-subcommand parity.
+ * shape used by `lloyal publish status` for cross-subcommand parity.
  */
 const SUBMISSION_ID_PATTERN = /^[0-9a-f-]+$/i;
 
@@ -28,7 +28,7 @@ const ALLOWED_TARBALL_HOSTS: ReadonlySet<string> = new Set(['apps.lloyal.ai']);
 function assertSubmissionIdFormat(submissionId: string, label: string): number {
   if (!SUBMISSION_ID_PATTERN.test(submissionId)) {
     process.stderr.write(
-      `harness.dev ${label}: invalid submissionId "${submissionId}"\n`,
+      `lloyal ${label}: invalid submissionId "${submissionId}"\n`,
     );
     return 1;
   }
@@ -36,13 +36,13 @@ function assertSubmissionIdFormat(submissionId: string, label: string): number {
 }
 
 const USAGE = [
-  'harness.dev review — Lloyal-internal review surface for pending app submissions',
+  'lloyal review — Lloyal-internal review surface for pending app submissions',
   '',
   'Usage:',
-  '  npx harness.dev review list [--status pending|approved|rejected] [--limit N]',
-  '  npx harness.dev review inspect <submissionId> [--extract <dir>]',
-  '  npx harness.dev review approve <submissionId>',
-  '  npx harness.dev review reject  <submissionId> --reason "<text>"',
+  '  npx lloyal review list [--status pending|approved|rejected] [--limit N]',
+  '  npx lloyal review inspect <submissionId> [--extract <dir>]',
+  '  npx lloyal review approve <submissionId>',
+  '  npx lloyal review reject  <submissionId> --reason "<text>"',
   '',
   'Subcommands:',
   '  list      List submissions in the given status (default `pending`).',
@@ -78,7 +78,7 @@ export const reviewCommand: Command = {
       case 'reject':
         return runReject(rest);
       default:
-        process.stderr.write(`harness.dev review: unknown subcommand "${sub}"\n\n${USAGE}\n`);
+        process.stderr.write(`lloyal review: unknown subcommand "${sub}"\n\n${USAGE}\n`);
         return 1;
     }
   },
@@ -118,7 +118,7 @@ async function runList(argv: readonly string[]): Promise<number> {
   const status = values.status ?? 'pending';
   if (status !== 'pending' && status !== 'approved' && status !== 'rejected') {
     process.stderr.write(
-      `harness.dev review list: invalid --status "${status}" (expected pending|approved|rejected)\n`,
+      `lloyal review list: invalid --status "${status}" (expected pending|approved|rejected)\n`,
     );
     return 1;
   }
@@ -164,7 +164,7 @@ async function runInspect(argv: readonly string[]): Promise<number> {
     return 0;
   }
   if (positionals.length !== 1) {
-    process.stderr.write('harness.dev review inspect: expected exactly one <submissionId>\n');
+    process.stderr.write('lloyal review inspect: expected exactly one <submissionId>\n');
     return 1;
   }
   const submissionId = positionals[0];
@@ -215,13 +215,13 @@ async function runInspect(argv: readonly string[]): Promise<number> {
       inspectUrl = new URL(body.tarballInspectUrl);
     } catch {
       process.stderr.write(
-        `harness.dev review inspect: server returned a malformed tarballInspectUrl\n`,
+        `lloyal review inspect: server returned a malformed tarballInspectUrl\n`,
       );
       return 1;
     }
     if (!ALLOWED_TARBALL_HOSTS.has(inspectUrl.host)) {
       process.stderr.write(
-        `harness.dev review inspect: refused to fetch tarballInspectUrl from "${inspectUrl.host}" ` +
+        `lloyal review inspect: refused to fetch tarballInspectUrl from "${inspectUrl.host}" ` +
           `(not in allowlist: ${[...ALLOWED_TARBALL_HOSTS].join(', ')})\n`,
       );
       return 1;
@@ -252,7 +252,7 @@ async function runApprove(argv: readonly string[]): Promise<number> {
     return 0;
   }
   if (positionals.length !== 1) {
-    process.stderr.write('harness.dev review approve: expected exactly one <submissionId>\n');
+    process.stderr.write('lloyal review approve: expected exactly one <submissionId>\n');
     return 1;
   }
   const submissionId = positionals[0];
@@ -300,11 +300,11 @@ async function runReject(argv: readonly string[]): Promise<number> {
     return 0;
   }
   if (positionals.length !== 1) {
-    process.stderr.write('harness.dev review reject: expected exactly one <submissionId>\n');
+    process.stderr.write('lloyal review reject: expected exactly one <submissionId>\n');
     return 1;
   }
   if (typeof values.reason !== 'string' || values.reason.length < 3) {
-    process.stderr.write('harness.dev review reject: --reason "<text>" (min 3 chars) is required\n');
+    process.stderr.write('lloyal review reject: --reason "<text>" (min 3 chars) is required\n');
     return 1;
   }
   const submissionId = positionals[0];
@@ -356,6 +356,6 @@ async function authedFetch(url: string, init: RequestInit): Promise<Response> {
 
 async function errorOut(label: string, res: Response): Promise<number> {
   const body = await res.text();
-  process.stderr.write(`harness.dev ${label}: HTTP ${res.status} ${res.statusText}\n${body}\n`);
+  process.stderr.write(`lloyal ${label}: HTTP ${res.status} ${res.statusText}\n${body}\n`);
   return 1;
 }

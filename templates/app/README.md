@@ -1,6 +1,6 @@
 # __NAME__-app
 
-HDK app scaffolded by `harness.dev app __NAME__`. Demonstrates the App protocol with a search + fetch tool pair. Out of the box the tools call Wikipedia's public REST so you can run + test the app end-to-end before customizing — replace the tool bodies with your real __NAME__ integration.
+HDK app scaffolded by `lloyal app __NAME__`. Demonstrates the App protocol with a search + fetch tool pair. Out of the box the tools call Wikipedia's public REST so you can run + test the app end-to-end before customizing — replace the tool bodies with your real __NAME__ integration.
 
 ## First run
 
@@ -33,7 +33,7 @@ When the app is ready to ship:
 
 ```bash
 npm version 1.0.0      # or whatever version
-harness.dev publish    # submit to apps.lloyal.ai for review
+lloyal publish    # submit to apps.lloyal.ai for review
 ```
 
 See the [CLI publishing docs](https://docs.lloyal.ai/cli/publishing) for the full review flow.

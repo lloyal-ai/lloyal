@@ -8,7 +8,7 @@
  */
 
 export interface Command {
-  /** The token typed after `harness.dev` (e.g. `new`, `app:new`, `install`). */
+  /** The token typed after `lloyal` (e.g. `new`, `app:new`, `install`). */
   readonly name: string;
   /** One-line description shown in the top-level help listing. */
   readonly summary: string;

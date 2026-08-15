@@ -7,11 +7,11 @@
  * with `--skip-apps` — or one whose fetch failed — cannot typecheck. Without
  * this guard `npm start` dies inside `tsc` with a bare TS2307: the compiler
  * complaining about a supply problem. Running ahead of the compiler puts the
- * `harness.dev install` line in front of the user instead.
+ * `lloyal install` line in front of the user instead.
  *
  * Both truth sources are in package.json, and the CLI writes both:
  *
- *   harnessdev.apps        the install specs `harness.dev new` recorded
+ *   harnessdev.apps        the install specs `lloyal new` recorded
  *   dependencies[<name>]   `file:vendor/<publisher>__<name>-<version>.tgz`,
  *                          written by verifyAndVendorApp → setFileDependency
  *                          (harness-cli/src/scaffold/vendor-app.ts)
@@ -50,12 +50,12 @@ if (missing.length) {
   process.stderr.write(
     `\nThis harness imports ${plural ? "AgentApps that are" : "an AgentApp that is"} not installed.\n` +
       "Fetch the signed (Ed25519-verified) bundles, then try again:\n\n" +
-      `${missing.map((spec) => `  npx harness.dev install ${spec}`).join("\n")}\n\n`,
+      `${missing.map((spec) => `  npx lloyal install ${spec}`).join("\n")}\n\n`,
   );
   process.exit(1);
 }
 
-/** The `harness.dev install` specs `harness.dev new` recorded for this project. */
+/** The `lloyal install` specs `lloyal new` recorded for this project. */
 function recordedSpecs(pkg) {
   const apps = pkg.harnessdev?.apps;
   return Array.isArray(apps) ? apps.filter((a) => typeof a === "string") : [];

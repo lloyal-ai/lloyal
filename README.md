@@ -1,11 +1,11 @@
-# harness.dev
+# lloyal
 
 **`rails new` for agentic AI apps — the model lives inside, no API key.**
 
-`harness.dev` is the CLI for the [lloyal HDK](https://github.com/lloyal-ai/hdk). It scaffolds a **harness** — a runnable vertical-inference app in ordinary TypeScript — and runs it on a model **you own**: resident in your process on a laptop, or served from your own GPU host. Every agent scaffold starts with `API_KEY=`; a harness starts with a model.
+`lloyal` is the CLI for the [HDK](https://github.com/lloyal-ai/hdk). It scaffolds a **harness** — a runnable vertical-inference app in ordinary TypeScript — and runs it on a model **you own**: resident in your process on a laptop, or served from your own GPU host. Every agent scaffold starts with `API_KEY=`; a harness starts with a model.
 
 ```bash
-npx harness.dev new              # interactive: name → surfaces → model → template
+npx lloyal new              # interactive: name → surfaces → model → template
 cd my-harness && npm install && npm start
 ```
 
@@ -50,7 +50,7 @@ my-harness/
 └── targets/             one full-stack app per target — cli · desktop · web
 ```
 
-`harness.dev targets:add web` adds a browser app **without touching `harness.ts`** — it's MVC with a live model as the Model: your harness is the Controller, surfaces are Views. [You already know this architecture — it shipped in Rails in 2007.](https://lloyal.ai/blog/you-already-know-this-architecture/)
+`lloyal targets:add web` adds a browser app **without touching `harness.ts`** — it's MVC with a live model as the Model: your harness is the Controller, surfaces are Views. [You already know this architecture — it shipped in Rails in 2007.](https://lloyal.ai/blog/you-already-know-this-architecture/)
 
 ## Commands
 
@@ -59,27 +59,27 @@ Grammar: one bare verb for the primary artifact (`new`); `<noun>:<verb>` namespa
 **Scaffold**
 
 ```bash
-npx harness.dev new [name]                       # scaffold a harness (interactive if no name)
-npx harness.dev new my-app --template research   # a production research harness: recon, planning,
+npx lloyal new [name]                       # scaffold a harness (interactive if no name)
+npx lloyal new my-app --template research   # a production research harness: recon, planning,
                                                  #   parallel investigation, evidence admission, synthesis
-npx harness.dev app:new <name>                   # scaffold an App (a portable capability package)
+npx lloyal app:new <name>                   # scaffold an App (a portable capability package)
 ```
 
 `new` flags (any also pre-seed the picker): `--targets cli,desktop,web` · `--model <id|path>` · `--template <basic|research>` · `--yes` (CI) · `--dir <path>`.
 
-Two more, for controlling what `new` does after it writes the tree: `--skip-install` (don't run `npm install`) and `--skip-apps` (don't fetch the template's default AgentApp). They are independent — the harness imports its apps at the top level, so a scaffold made with `--skip-apps` neither typechecks nor starts until you add them with `harness.dev install`. Use it only for an offline or hermetic scaffold.
+Two more, for controlling what `new` does after it writes the tree: `--skip-install` (don't run `npm install`) and `--skip-apps` (don't fetch the template's default AgentApp). They are independent — the harness imports its apps at the top level, so a scaffold made with `--skip-apps` neither typechecks nor starts until you add them with `lloyal install`. Use it only for an offline or hermetic scaffold.
 
 **Manage a scaffolded project** (run from its root)
 
 ```bash
-npx harness.dev models:use <id>                  # pin a catalog model (downloaded + verified next run)
-npx harness.dev models:add <path>                # register a local .gguf you already have
-npx harness.dev models:download <url> [--sha256 <hex>]  # stream a .gguf into models/<role>/
-npx harness.dev models:list                      # catalog ids · active pins · installed files
+npx lloyal models:use <id>                  # pin a catalog model (downloaded + verified next run)
+npx lloyal models:add <path>                # register a local .gguf you already have
+npx lloyal models:download <url> [--sha256 <hex>]  # stream a .gguf into models/<role>/
+npx lloyal models:list                      # catalog ids · active pins · installed files
 
-npx harness.dev targets:add <desktop|web>        # bind the same harness to another surface
-npx harness.dev targets:remove <desktop|web>     # drop a surface
-npx harness.dev targets:list                     # show the surfaces present
+npx lloyal targets:add <desktop|web>        # bind the same harness to another surface
+npx lloyal targets:remove <desktop|web>     # drop a surface
+npx lloyal targets:list                     # show the surfaces present
 ```
 
 The `models:` verbs own the write to `harness.yml`'s `model.<role>.{id|path}`, so the manifest is never hand-edited. A catalog `id` is downloaded + digest-verified fail-closed; a `path` is a local weight you point at, trusted explicitly.
@@ -89,7 +89,7 @@ The `models:` verbs own the write to `harness.yml`'s `model.<role>.{id|path}`, s
 An **AgentApp** — an **App** in commands and code — is a portable capability package: a protocol, tools, skills, config and grants a harness can enable.
 
 ```bash
-npx harness.dev install <publisher>/<name>       # install a signed App from apps.lloyal.ai
+npx lloyal install <publisher>/<name>       # install a signed App from apps.lloyal.ai
 ```
 
 Every install is verified before it runs:
@@ -104,10 +104,10 @@ Every install is verified before it runs:
 **Publishers**
 
 ```bash
-npx harness.dev publishers register              # claim your publisher handle
-npx harness.dev publish                          # build, sign, and submit your App
-npx harness.dev publish status <id>              # check a submission
-npx harness.dev review                           # (reviewers) inspect + approve submissions
+npx lloyal publishers register              # claim your publisher handle
+npx lloyal publish                          # build, sign, and submit your App
+npx lloyal publish status <id>              # check a submission
+npx lloyal review                           # (reviewers) inspect + approve submissions
 ```
 
 ## Where it sits

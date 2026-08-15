@@ -60,12 +60,12 @@ function diagnose(err) {
   ].join("\n");
 }
 
-/** The `harness.dev install` specs `harness.dev new` recorded for this project. */
+/** The `lloyal install` specs `lloyal new` recorded for this project. */
 function installLines(pkg) {
   const apps = pkg.harnessdev?.apps;
   const specs = Array.isArray(apps) ? apps.filter((a) => typeof a === "string") : [];
   return (specs.length ? specs : ["<publisher>/<name>"]).map(
-    (spec) => `  npx harness.dev install ${spec}`,
+    (spec) => `  npx lloyal install ${spec}`,
   );
 }
 

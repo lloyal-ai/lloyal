@@ -1,6 +1,6 @@
 /**
  * Tests for the embedded Cloudflare Access OAuth client used by
- * `harness.dev publish`. Covers the pure + fetch-mockable surface of
+ * `lloyal publish`. Covers the pure + fetch-mockable surface of
  * the loopback-OAuth flow. The actual browser-open + redirect capture
  * is exercised by the manual smoke (Q.5) — too hard to mock cleanly,
  * and the harness developer running publish for the first time IS the
@@ -24,7 +24,7 @@ import {
   type OAuthTokens,
 } from '../src/cf-access-oauth';
 
-// ── Test cache dir (overrides ~/.harness.dev) ────────────────────
+// ── Test cache dir (overrides ~/.lloyal) ────────────────────
 
 let cacheRoot: string;
 

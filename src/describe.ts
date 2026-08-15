@@ -1,13 +1,13 @@
 /**
  * Publish-time "attention surface" extraction.
  *
- * At `harness.dev publish` (a TRUSTED publisher-machine context) we serialize
+ * At `lloyal publish` (a TRUSTED publisher-machine context) we serialize
  * everything the app injects into the model's context — the per-spawn skill
  * prose, every tool's name + description + parameter schema, `useWhen`, and the
  * config schema — into `attention-surface.json`, which the publish command
  * writes INTO the npm tarball. Because the worker signs the tarball bytes at
  * approval, this artifact is covered by the same Ed25519 signature: a reviewer
- * and `harness.dev install` can verify exactly what enters the model WITHOUT
+ * and `lloyal install` can verify exactly what enters the model WITHOUT
  * executing untrusted code.
  *
  * Tool descriptions + parameter schemas live in compiled `Tool` instances, so
@@ -179,7 +179,7 @@ function describeTools(
     proc.stderr.on('data', (c: Buffer) => (err += c.toString('utf-8')));
     const fallback = (why: string) => {
       process.stderr.write(
-        `harness.dev publish: WARNING — could not construct "${appName}" to read tool ` +
+        `lloyal publish: WARNING — could not construct "${appName}" to read tool ` +
           `descriptions/parameters (${why.trim().split('\n')[0] || 'unknown'}). ` +
           `Falling back to tool NAMES only from app.json. The attention surface for ` +
           `this version will omit tool descriptions + parameter schemas.\n`,

@@ -347,7 +347,7 @@ describe('targets:add (inverse of prune)', () => {
     const said = err.mock.calls.map((c) => String(c[0])).join('');
     err.mockRestore();
 
-    expect(said).toMatch(/predates harness\.dev 0\.9/);
+    expect(said).toMatch(/predates lloyal 0\.9/);
     expect(said).toMatch(/targets\/_shared/);
     expect(existsSync(join(dir, 'targets/web'))).toBe(false); // nothing written
     expect(existsSync(join(dir, 'targets/desktop'))).toBe(true); // nothing destroyed

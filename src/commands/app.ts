@@ -5,10 +5,10 @@ import { fileURLToPath } from 'node:url';
 import type { Command } from '../command.js';
 
 const USAGE = [
-  'harness.dev app:new — scaffold a new HDK app',
+  'lloyal app:new — scaffold a new HDK app',
   '',
   'Usage:',
-  '  npx harness.dev app:new <name> [--dir <path>] [--publisher <handle>]',
+  '  npx lloyal app:new <name> [--dir <path>] [--publisher <handle>]',
   '',
   'Arguments:',
   '  <name>              App name (lowercase, [a-z][a-z0-9_-]{1,63}) — also the',
@@ -28,7 +28,7 @@ const USAGE = [
   'compatible.',
 ].join('\n');
 
-// Pattern shared with `harness.dev new`: identifier grammar that
+// Pattern shared with `lloyal new`: identifier grammar that
 // satisfies App protocol + npm scoped-name conventions.
 const NAME_RE = /^[a-z][a-z0-9_-]{1,63}$/;
 
@@ -54,12 +54,12 @@ export const appCommand: Command = {
 
     const name = positionals[0];
     if (!name) {
-      process.stderr.write('harness.dev app:new: missing <name>\n\n' + USAGE + '\n');
+      process.stderr.write('lloyal app:new: missing <name>\n\n' + USAGE + '\n');
       return 1;
     }
     if (!NAME_RE.test(name)) {
       process.stderr.write(
-        `harness.dev app:new: invalid <name> "${name}" — expected [a-z][a-z0-9_-]{1,63}.\n`,
+        `lloyal app:new: invalid <name> "${name}" — expected [a-z][a-z0-9_-]{1,63}.\n`,
       );
       return 1;
     }
@@ -69,7 +69,7 @@ export const appCommand: Command = {
     const publisher = (values.publisher ?? 'your-handle').replace(/^@/, '');
     if (!NAME_RE.test(publisher)) {
       process.stderr.write(
-        `harness.dev app:new: invalid --publisher "${publisher}" — expected [a-z][a-z0-9_-]{1,63}.\n`,
+        `lloyal app:new: invalid --publisher "${publisher}" — expected [a-z][a-z0-9_-]{1,63}.\n`,
       );
       return 1;
     }
@@ -79,7 +79,7 @@ export const appCommand: Command = {
     try {
       if (statSync(dest).isDirectory()) {
         process.stderr.write(
-          `harness.dev app:new: ${dest} already exists. Choose a different name or remove the directory first.\n`,
+          `lloyal app:new: ${dest} already exists. Choose a different name or remove the directory first.\n`,
         );
         return 1;
       }
@@ -94,7 +94,7 @@ export const appCommand: Command = {
       copyTreeWithSubstitutions(templateDir, dest, substitutions);
     } catch (err) {
       process.stderr.write(
-        `harness.dev app:new: scaffold failed: ${err instanceof Error ? err.message : String(err)}\n`,
+        `lloyal app:new: scaffold failed: ${err instanceof Error ? err.message : String(err)}\n`,
       );
       return 1;
     }

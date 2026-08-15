@@ -2,7 +2,7 @@
   "name": "__NAME__",
   "version": "0.1.0",
   "private": true,
-  "description": "A vertical inference harness scaffolded by `harness.dev`.",
+  "description": "A vertical inference harness scaffolded by `lloyal`.",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
