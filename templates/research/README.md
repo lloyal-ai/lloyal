@@ -70,7 +70,7 @@ prompt; an empty `prompts/` is byte-identical to the baked defaults.
 ## Add capabilities
 
 ```sh
-npx lloyal-cli install <publisher>/<name>   # a signed AgentApp from apps.lloyal.ai
+npx lloyal-ai install <publisher>/<name>   # a signed AgentApp from apps.lloyal.ai
 ```
 
 Enable it in `harness/harness.ts` by adding its factory to `apps`.

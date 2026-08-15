@@ -31,8 +31,8 @@ function printHelp(): void {
     [
       'lloyal — Harness Development Kit CLI',
       '',
-      '  npx lloyal-cli <command>     run it without installing',
-      '  npm i -g lloyal-cli          then the command is just `lloyal`',
+      '  npx lloyal-ai <command>     run it without installing',
+      '  npm i -g lloyal-ai          then the command is just `lloyal`',
       '',
       'Scaffold:',
       '  lloyal new [name]           Scaffold a new harness (interactive if no name)',
