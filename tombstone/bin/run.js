@@ -32,7 +32,7 @@ process.stderr.write(
     '      npm i -g lloyal-ai   ->   lloyal new',
     '',
     '  ' + dim('Docs    https://docs.lloyal.ai'),
-    '  ' + dim('Source  https://github.com/lloyal-ai/lloyal'),
+    '  ' + dim('Source  https://github.com/lloyal-ai/lloyal-ai'),
     '',
     '',
   ].join('\n'),

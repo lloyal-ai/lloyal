@@ -157,7 +157,7 @@ export async function verifyAndVendorApp(
     throw new BundleVerificationError(
       `manifest integrity ${manifest.integrity} does not match sha512 of received ` +
         `tarball bytes ${integrity}. This indicates a signing-pipeline bug — file an ` +
-        `issue at https://github.com/lloyal-ai/lloyal.`,
+        `issue at https://github.com/lloyal-ai/lloyal-ai.`,
     );
   }
 

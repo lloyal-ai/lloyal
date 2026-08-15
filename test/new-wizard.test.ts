@@ -39,7 +39,7 @@ describe('MODEL_FOOTPRINT_HINT — the hardware floor shown at the model step', 
   // entry `qwen3.5-4b`, `sizeBytes: 2_600_000_000`. If rig swaps the
   // recommended model or restates its size, this number and the hint in
   // `src/scaffold/model-catalog.ts` must both move. Nothing enforces that
-  // across the repo boundary any more — see lloyal-ai/lloyal#1.
+  // across the repo boundary any more — see lloyal-ai/lloyal-ai#1.
   const RIG_RECOMMENDED_MODEL_BYTES = 2_600_000_000;
 
   it('quotes a download size that matches rig’s sizeBytes for the recommended model', () => {

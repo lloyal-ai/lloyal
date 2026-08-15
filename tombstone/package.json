@@ -10,12 +10,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lloyal-ai/lloyal.git",
+    "url": "git+https://github.com/lloyal-ai/lloyal-ai.git",
     "directory": "tombstone"
   },
-  "homepage": "https://github.com/lloyal-ai/lloyal#readme",
+  "homepage": "https://github.com/lloyal-ai/lloyal-ai#readme",
   "bugs": {
-    "url": "https://github.com/lloyal-ai/lloyal/issues"
+    "url": "https://github.com/lloyal-ai/lloyal-ai/issues"
   },
   "keywords": [
     "deprecated"
