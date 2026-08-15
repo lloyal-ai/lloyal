@@ -1,0 +1,32 @@
+{
+  "name": "harness.dev",
+  "version": "0.11.0",
+  "description": "Renamed to lloyal-ai. This version exists only to say so.",
+  "bin": {
+    "harness.dev": "bin/run.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lloyal-ai/lloyal.git",
+    "directory": "tombstone"
+  },
+  "homepage": "https://github.com/lloyal-ai/lloyal#readme",
+  "bugs": {
+    "url": "https://github.com/lloyal-ai/lloyal/issues"
+  },
+  "keywords": [
+    "deprecated"
+  ],
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "files": [
+    "bin/run.js",
+    "LICENSE"
+  ]
+}

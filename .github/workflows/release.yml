@@ -52,13 +52,19 @@ jobs:
       - name: Publish
         if: success() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.skip_publish))
         run: |
-          NAME=$(node -p "require('./package.json').name")
-          VERSION=$(node -p "require('./package.json').version")
-          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
-            echo "⏭ $NAME@$VERSION already published, skipping"
-          else
-            echo "Publishing $NAME@$VERSION..."
-            npm publish --access public --provenance
-          fi
+          # The tombstone goes FIRST. It is a one-shot publish that retires the
+          # old name, and the guard below makes every later run skip it — but if
+          # it is ever going to run, it should not sit behind the main publish
+          # where a failure there would strand it.
+          for pkg in tombstone .; do
+            NAME=$(node -p "require('./$pkg/package.json').name")
+            VERSION=$(node -p "require('./$pkg/package.json').version")
+            if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+              echo "skip $NAME@$VERSION — already published"
+            else
+              echo "publishing $NAME@$VERSION..."
+              ( cd "$pkg" && npm publish --access public --provenance )
+            fi
+          done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
