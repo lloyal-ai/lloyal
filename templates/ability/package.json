@@ -2,7 +2,6 @@
   "name": "@__PUBLISHER__/__NAME__-ability",
   "version": "1.0.0",
   "description": "HDK ability \u2014 __NAME__ research.",
-  "license": "SEE LICENSE IN LICENSE",
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
