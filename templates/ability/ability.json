@@ -1,6 +1,6 @@
 {
   "name": "__NAME__",
-  "appProtocolVersion": "3.0",
+  "abilityProtocolVersion": "3.0",
   "protocol": {
     "name": "__NAME___research",
     "useWhen": "EDIT THIS: a single sentence describing when an agent should route a subtask to this ability. Be specific about the domain — the planner reads this verbatim to choose between abilities.",
