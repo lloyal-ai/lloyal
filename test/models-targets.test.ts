@@ -441,7 +441,7 @@ describe('marker', () => {
       targets: ['cli', 'web'],
       // Recorded even under --skip-abilities: the harness still imports them, so
       // `bin/run.js` needs the specs to name at boot.
-      abilities: ['lloyal/wikipedia@1.2.0'],
+      abilities: ['lloyal/wikipedia@2.0.0'],
     });
   });
 
@@ -451,7 +451,7 @@ describe('marker', () => {
     expect(pkg(dir).harnessdev).toEqual({
       template: 'basic',
       targets: ['cli'],
-      abilities: ['lloyal/wikipedia@1.2.0'],
+      abilities: ['lloyal/wikipedia@2.0.0'],
     });
   });
 });

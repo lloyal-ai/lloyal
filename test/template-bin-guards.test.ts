@@ -49,8 +49,8 @@ function run(dir: string, script: string): { status: number | null; stderr: stri
   return { status: r.status, stderr: r.stderr };
 }
 
-const WIKIPEDIA = 'lloyal/wikipedia@1.2.0';
-const VENDORED = 'file:vendor/lloyal__wikipedia-1.2.0.tgz';
+const WIKIPEDIA = 'lloyal/wikipedia@2.0.0';
+const VENDORED = 'file:vendor/lloyal__wikipedia-2.0.0.tgz';
 
 describe('preflight-abilities.js', () => {
   it('fails with the install line when a recorded ability was never vendored', () => {
@@ -78,17 +78,17 @@ describe('preflight-abilities.js', () => {
     const dir = fixture({
       name: 'p',
       type: 'module',
-      dependencies: { '@lloyal-labs/corpus-ability': 'file:vendor/lloyal__corpus-1.3.0.tgz' },
+      dependencies: { '@lloyal-labs/corpus-ability': 'file:vendor/lloyal__corpus-2.0.0.tgz' },
       harnessdev: {
         template: 'research',
         targets: ['cli'],
-        abilities: ['lloyal/corpus@1.3.0', 'lloyal/web@1.3.0'],
+        abilities: ['lloyal/corpus@2.0.0', 'lloyal/web@2.0.0'],
       },
     });
     const { status, stderr } = run(dir, 'preflight-abilities.js');
     expect(status).toBe(1);
-    expect(stderr).toContain('npx lloyal-ai install lloyal/web@1.3.0');
-    expect(stderr).not.toContain('lloyal/corpus@1.3.0');
+    expect(stderr).toContain('npx lloyal-ai install lloyal/web@2.0.0');
+    expect(stderr).not.toContain('lloyal/corpus@2.0.0');
   });
 
   it('passes when the marker records no abilities — absent means UNKNOWN, not none', () => {
