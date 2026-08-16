@@ -36,7 +36,7 @@ function assertSubmissionIdFormat(submissionId: string, label: string): number {
 }
 
 const USAGE = [
-  'lloyal review — Lloyal-internal review surface for pending app submissions',
+  'lloyal review — Lloyal-internal review surface for pending ability submissions',
   '',
   'Usage:',
   '  lloyal review list [--status pending|approved|rejected] [--limit N]',
@@ -59,7 +59,7 @@ const USAGE = [
 
 export const reviewCommand: Command = {
   name: 'review',
-  summary: 'Lloyal-internal review surface for pending app submissions',
+  summary: 'Lloyal-internal review surface for pending ability submissions',
   usage: USAGE,
   async run(argv) {
     const sub = argv[0];

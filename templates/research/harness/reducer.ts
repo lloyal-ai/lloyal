@@ -16,10 +16,10 @@ import type { Config } from './config-types.js';
 import { shortPath } from './short-path.js';
 
 /** Seed/refresh `participation` from current config. The reducer holds NO
- *  per-app knowledge: apps default to included via the `!== false`
- *  convention (any app absent from the map renders as included), so there's
+ *  per-ability knowledge: abilities default to included via the `!== false`
+ *  convention (any ability absent from the map renders as included), so there's
  *  nothing to seed here on a plain config load. The included-by-default set
- *  is the registry-enabled apps surfaced via `apps:state`; per-app intent is
+ *  is the registry-enabled abilities surfaced via `abilities:state`; per-ability intent is
  *  driven explicitly through `participation:toggled` (chip toggle) and
  *  `set_app_config` (configuring → main.ts sets the bit + re-emits state).
  *  Returns `prev` unchanged — kept as a function so config events have a
@@ -69,9 +69,9 @@ function formatArgSummary(tool: string, rawArgs: string): string {
 
 /** Best-effort per-tool summary used by the column's ToolResult line. The
  *  `sources` field carries per-page citation metadata for the Sources ledger —
- *  extracted consumer-side from the tool's free-form result (the App Protocol
+ *  extracted consumer-side from the tool's free-form result (the Ability Protocol
  *  prescribes no result schema). web_search/fetch_page already return
- *  url+title+snippet; image/icon (og:image + favicon) populate once the web app
+ *  url+title+snippet; image/icon (og:image + favicon) populate once the web ability
  *  ≥1.2.0 emits them. */
 function summarizeResult(tool: string, raw: string): {
   summary: string;
@@ -118,7 +118,7 @@ function summarizeResult(tool: string, raw: string): {
     // Corpus semantic search → { hits: [{ file, heading, score }], … }. Each hit
     // is a local source (a file/section); emit per-hit metadata into `sources`
     // so the ledger surfaces corpus sources exactly like web pages. The ledger
-    // is App-Protocol-agnostic — it keys off `sources[]`, not the app/tool name.
+    // is Ability-Protocol-agnostic — it keys off `sources[]`, not the ability/tool name.
     if (
       tool === 'search' &&
       typeof parsed === 'object' &&
@@ -193,7 +193,7 @@ function summarizeResult(tool: string, raw: string): {
       if (r.error) return { summary: r.error, hosts: [], resultCount: null, preview: null };
       const hosts = r.url ? [hostOf(r.url)] : [];
       // A fetched page is one rich citation: title + excerpt as the snippet,
-      // plus og:image + favicon once the web app emits them (web ≥1.2.0).
+      // plus og:image + favicon once the web ability emits them (web ≥1.2.0).
       const sources: SourceMeta[] | undefined =
         r.url || r.title
           ? [
@@ -341,7 +341,7 @@ export function reduce(state: AppState, ev: WorkflowEvent): AppState {
         toast: state.toast,
         scrollback: state.scrollback,
         participation: state.participation,
-        apps: state.apps,
+        abilities: state.abilities,
         query: ev.query,
         warm: ev.warm,
         phase: 'plan',
@@ -532,7 +532,7 @@ export function reduce(state: AppState, ev: WorkflowEvent): AppState {
           ? `saved → ${shortPath(ev.savedTo)} (added to .gitignore)`
           : `saved → ${shortPath(ev.savedTo)}`;
       // Reconfigure = strong signal of intent to use. Auto-include the
-      // newly-(re)configured apps; drop participation entries for apps
+      // newly-(re)configured abilities; drop participation entries for abilities
       // whose config was just cleared.
       return {
         ...state,
@@ -562,15 +562,15 @@ export function reduce(state: AppState, ev: WorkflowEvent): AppState {
       };
     }
 
-    case 'apps:state':
+    case 'abilities:state':
       // Whole-replace the installed-AgentApps snapshot. Display-only — drives
       // the Settings drawer. Emitted on boot completion + every registry
       // enable/disable/config change.
-      return { ...state, apps: ev.apps };
+      return { ...state, abilities: ev.abilities };
 
     case 'preflight:start': {
       // Pre-flight recon runs BEFORE the planner, so it's the first event of a
-      // multi-app query. Reset to a clean run (like the `query` event does) and
+      // multi-ability query. Reset to a clean run (like the `query` event does) and
       // enter the discovering phase; the recon agent's stream renders live via
       // the same Column machinery the research view uses. The planner's later
       // `query` event resets again before research, so recon agents are
@@ -589,7 +589,7 @@ export function reduce(state: AppState, ev: WorkflowEvent): AppState {
         scrollback: state.scrollback,
         corpusStatus: state.corpusStatus,
         participation: state.participation,
-        apps: state.apps,
+        abilities: state.abilities,
         query: ev.query,
         uiPhase: 'discovering',
         phase: 'recon',

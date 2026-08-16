@@ -10,8 +10,8 @@
  * 2. **sha512Integrity matches Node's crypto digest** — the install
  *    audit step depends on this exactly equalling what npm computes
  *    and writes into package-lock.json.
- * 3. **resolveAppVersion semver semantics** — exact, ^caret, ~tilde,
- *    `*` wildcard, AppNotFoundError on no-match.
+ * 3. **resolveAbilityVersion semver semantics** — exact, ^caret, ~tilde,
+ *    `*` wildcard, AbilityNotFoundError on no-match.
  *
  * Network paths (fetchAndVerifyCatalog, fetchAndVerifyManifest) are
  * exercised by the end-to-end install gate in Phase Z.5 — they're
@@ -24,8 +24,8 @@ import { createHash } from 'node:crypto';
 import {
   verifyBundle,
   sha512Integrity,
-  resolveAppVersion,
-  AppNotFoundError,
+  resolveAbilityVersion,
+  AbilityNotFoundError,
   type SignedCatalog,
 } from '../src/verify';
 
@@ -97,7 +97,7 @@ describe('sha512Integrity', () => {
   });
 });
 
-describe('resolveAppVersion', () => {
+describe('resolveAbilityVersion', () => {
   function makeCatalog(): SignedCatalog {
     return {
       signedAt: '2026-06-07T00:00:00Z',
@@ -128,13 +128,13 @@ describe('resolveAppVersion', () => {
         tarballUrl: `https://apps.lloyal.ai/v1/bundles/web-${version}.tgz`,
         appProtocolVersion: '3.0',
         sizeBytes: 1024,
-        importName: '@lloyal-labs/web-app',
+        importName: '@lloyal-labs/web-ability',
       };
     }
   }
 
   it('picks highest version with no range (default)', () => {
-    const out = resolveAppVersion(makeCatalog(), 'web');
+    const out = resolveAbilityVersion(makeCatalog(), 'web');
     // 2.1.0-beta.1 has a higher core than 2.0.0, so it wins. Matches
     // rig's `rcompare`-based ordering — the "release > prerelease"
     // tiebreaker only applies when cores are equal. Consumers who want
@@ -143,19 +143,19 @@ describe('resolveAppVersion', () => {
   });
 
   it('picks highest matching with ^caret', () => {
-    expect(resolveAppVersion(makeCatalog(), 'web', { semver: '^1.0.0' }).version).toBe('1.2.5');
-    expect(resolveAppVersion(makeCatalog(), 'web', { semver: '^1.0.3' }).version).toBe('1.2.5');
-    expect(resolveAppVersion(makeCatalog(), 'web', { semver: '^2.0.0' }).version).toBe('2.0.0');
+    expect(resolveAbilityVersion(makeCatalog(), 'web', { semver: '^1.0.0' }).version).toBe('1.2.5');
+    expect(resolveAbilityVersion(makeCatalog(), 'web', { semver: '^1.0.3' }).version).toBe('1.2.5');
+    expect(resolveAbilityVersion(makeCatalog(), 'web', { semver: '^2.0.0' }).version).toBe('2.0.0');
   });
 
   it('picks highest matching with ~tilde', () => {
-    expect(resolveAppVersion(makeCatalog(), 'web', { semver: '~1.0.0' }).version).toBe('1.0.3');
-    expect(resolveAppVersion(makeCatalog(), 'web', { semver: '~1.2.0' }).version).toBe('1.2.5');
+    expect(resolveAbilityVersion(makeCatalog(), 'web', { semver: '~1.0.0' }).version).toBe('1.0.3');
+    expect(resolveAbilityVersion(makeCatalog(), 'web', { semver: '~1.2.0' }).version).toBe('1.2.5');
   });
 
   it('picks exact match with bare version', () => {
-    expect(resolveAppVersion(makeCatalog(), 'web', { semver: '1.0.0' }).version).toBe('1.0.0');
-    expect(resolveAppVersion(makeCatalog(), 'web', { semver: '1.2.5' }).version).toBe('1.2.5');
+    expect(resolveAbilityVersion(makeCatalog(), 'web', { semver: '1.0.0' }).version).toBe('1.0.0');
+    expect(resolveAbilityVersion(makeCatalog(), 'web', { semver: '1.2.5' }).version).toBe('1.2.5');
   });
 
   it('returns highest including prereleases under * wildcard', () => {
@@ -170,19 +170,19 @@ describe('resolveAppVersion', () => {
         },
       ],
     };
-    expect(resolveAppVersion(onlyPre, 'foo', { semver: '*' }).version).toBe('0.1.0-alpha.1');
+    expect(resolveAbilityVersion(onlyPre, 'foo', { semver: '*' }).version).toBe('0.1.0-alpha.1');
   });
 
-  it('throws AppNotFoundError for unknown name', () => {
-    expect(() => resolveAppVersion(makeCatalog(), 'jira')).toThrow(AppNotFoundError);
+  it('throws AbilityNotFoundError for unknown name', () => {
+    expect(() => resolveAbilityVersion(makeCatalog(), 'jira')).toThrow(AbilityNotFoundError);
   });
 
-  it('throws AppNotFoundError when no version matches', () => {
-    expect(() => resolveAppVersion(makeCatalog(), 'web', { semver: '^3.0.0' })).toThrow(AppNotFoundError);
+  it('throws AbilityNotFoundError when no version matches', () => {
+    expect(() => resolveAbilityVersion(makeCatalog(), 'web', { semver: '^3.0.0' })).toThrow(AbilityNotFoundError);
   });
 
   it('rejects unsupported semver syntax with a clear message', () => {
-    expect(() => resolveAppVersion(makeCatalog(), 'web', { semver: '>=1.0.0' })).toThrow(
+    expect(() => resolveAbilityVersion(makeCatalog(), 'web', { semver: '>=1.0.0' })).toThrow(
       /unsupported semver range/,
     );
   });

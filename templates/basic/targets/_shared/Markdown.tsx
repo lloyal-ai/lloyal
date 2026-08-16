@@ -1,7 +1,7 @@
 /**
  * Renders a report as GitHub-flavored markdown — headings, lists, tables, links,
  * code. Two pure-JS deps (`react-markdown` + `remark-gfm`); the editorial
- * typography lives in `app.css` under the `.md` class.
+ * typography lives in `ability.css` under the `.md` class.
  *
  * `h2`/`h3` get slug ids so the Contents (TOC) can link to them, and links open
  * in the system browser via `target="_blank"` (on desktop the Electron main

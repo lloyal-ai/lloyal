@@ -4,16 +4,16 @@
  * does. Two runtimes (Ink · React), one `reduce`.
  *
  * It's styled as a Wikipedia article, because `basic` ships the `lloyal/wikipedia`
- * app: a Contents rail, a serif title + editorial prose, the fetched articles
+ * ability: a Contents rail, a serif title + editorial prose, the fetched articles
  * floated as captioned figures, and a collapsible research log where each agent's
- * thinking and findings stream in. Swap the app and the wiki-specific bits (source
+ * thinking and findings stream in. Swap the ability and the wiki-specific bits (source
  * figures) gracefully empty; the layout + the streaming log stay generic. This is
  * the floor — reskin it into your product's own look.
  *
  * It's transport-agnostic: it reads only `window.harness`, a bridge injected by
  * desktop's preload (IPC) or web's boot (`connectWss`).
  */
-import "./app.css";
+import "./ability.css";
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import {
   reduce,

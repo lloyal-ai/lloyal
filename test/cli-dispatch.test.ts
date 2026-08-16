@@ -63,14 +63,14 @@ describe('dispatcher — help + version', () => {
 describe('findCommand', () => {
   it('resolves the `new` verb + named subcommands', () => {
     expect(findCommand('new')?.name).toBe('new');
-    expect(findCommand('app:new')?.name).toBe('app:new');
+    expect(findCommand('ability:new')?.name).toBe('ability:new');
     expect(findCommand('install')?.name).toBe('install');
   });
 
   it('returns undefined for retired/unknown tokens (so the dispatcher errors)', () => {
-    // `create` and `app` were renamed — no backward-compat alias.
+    // `create` and `ability` were renamed — no backward-compat alias.
     expect(findCommand('create')).toBeUndefined();
-    expect(findCommand('app')).toBeUndefined();
+    expect(findCommand('ability')).toBeUndefined();
     expect(findCommand('approve')).toBeUndefined();
     expect(findCommand('bogus')).toBeUndefined();
   });

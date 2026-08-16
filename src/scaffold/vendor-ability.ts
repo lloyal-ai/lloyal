@@ -1,12 +1,12 @@
 /**
- * Verify a signed HDK app and materialize it as a LOCAL `file:` tarball
- * dependency — the shared primitive behind `lloyal install` (add-on apps)
- * and `lloyal new` (a template's default app).
+ * Verify a signed HDK ability and materialize it as a LOCAL `file:` tarball
+ * dependency — the shared primitive behind `lloyal install` (add-on abilities)
+ * and `lloyal new` (a template's default ability).
  *
  * **Why not `npm install <url>`.** npm 12 (default since 2026) refuses to
  * resolve a dependency from a remote URL/HTTPS tarball unless `--allow-remote`
  * is passed — the supply-chain hardening that followed the PhantomRaven RDD
- * campaign. Our whole app channel is "HTTPS tarballs from apps.lloyal.ai", so a
+ * campaign. Our whole ability channel is "HTTPS tarballs from apps.lloyal.ai", so a
  * raw `npm install <tarballUrl>` is blocked. Instead the CLI does the fetch +
  * **Ed25519 verify** itself, writes the verified bytes into the project's
  * `vendor/` dir, and points `package.json` at them with a `file:` spec. npm then
@@ -23,12 +23,12 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   fetchAndVerifyCatalog,
-  resolveAppVersion,
+  resolveAbilityVersion,
   fetchAndVerifyManifest,
   verifyBundle,
   sha512Integrity,
   BundleVerificationError,
-  type AppBundleManifest,
+  type AbilityBundleManifest,
 } from '../verify.js';
 import { readTarEntry, isGzipReadable } from '../tar-read.js';
 import type { AttentionSurface } from '../describe.js';
@@ -37,7 +37,7 @@ import { httpFetch } from '../http.js';
 /**
  * Spec grammar: `<publisher>/<name>[@<semver>]` (post-W) or back-compat
  * `<name>[@<semver>]` (lloyal-internal pre-W entries, which never reached
- * external publish). Both segments of the scoped form match the app/handle
+ * external publish). Both segments of the scoped form match the ability/handle
  * grammar `[a-z][a-z0-9_-]{1,63}`.
  */
 export const SCOPED_NAME_PATTERN = /^[a-z][a-z0-9_-]{1,63}\/[a-z][a-z0-9_-]{1,63}$/;
@@ -62,13 +62,13 @@ export class InvalidAppSpecError extends Error {
  * but never `@`, so the first `@` (if any) is unambiguously the semver
  * delimiter. Throws {@link InvalidAppSpecError} on a malformed name.
  */
-export function parseAppSpec(spec: string): AppSpec {
+export function parseAbilitySpec(spec: string): AppSpec {
   const atIdx = spec.indexOf('@');
   const name = atIdx === -1 ? spec : spec.slice(0, atIdx);
   const semver = atIdx === -1 ? undefined : spec.slice(atIdx + 1);
   if (!SCOPED_NAME_PATTERN.test(name) && !UNSCOPED_NAME_PATTERN.test(name)) {
     throw new InvalidAppSpecError(
-      `invalid app name "${name}" — expected \`<publisher>/<short-name>\` ` +
+      `invalid ability name "${name}" — expected \`<publisher>/<short-name>\` ` +
         '(e.g., `lloyal/web`, `acme/jira`).',
     );
   }
@@ -98,7 +98,7 @@ export interface VendoredApp {
 
 export interface VendorOptions {
   /**
-   * Print the app's attention-surface disclosure (what it injects into the
+   * Print the ability's attention-surface disclosure (what it injects into the
    * model's context) to stdout. Default `true` for the explicit `install`
    * command; the scaffolder passes `false` to keep `new` output terse.
    */
@@ -106,7 +106,7 @@ export interface VendorOptions {
 }
 
 /**
- * Fetch → Ed25519-verify → vendor a signed app into `<projectDir>/vendor/` and
+ * Fetch → Ed25519-verify → vendor a signed ability into `<projectDir>/vendor/` and
  * point `package.json` at it with a `file:` dependency. FATAL on any verify or
  * write failure — the vendored bytes become the source of truth, so there is no
  * silent fallback to a remote fetch. Returns the resolved coordinates.
@@ -115,14 +115,14 @@ export interface VendorOptions {
  * difference from the old flow is the final materialization (local `file:` dep
  * instead of `npm install <remote-url>`).
  */
-export async function verifyAndVendorApp(
+export async function verifyAndVendorAbility(
   projectDir: string,
   spec: AppSpec,
   opts: VendorOptions = {},
 ): Promise<VendoredApp> {
   // 1-2. Catalog → version entry (Ed25519-verified catalog; pure resolve).
   const catalog = await fetchAndVerifyCatalog();
-  const entry = resolveAppVersion(catalog, spec.name, { semver: spec.semver });
+  const entry = resolveAbilityVersion(catalog, spec.name, { semver: spec.semver });
 
   // 3. Manifest fetch + cross-check (name/version/sizeBytes vs the catalog).
   const { manifest, trustKey } = await fetchAndVerifyManifest(entry, spec.name);
@@ -161,7 +161,7 @@ export async function verifyAndVendorApp(
     );
   }
 
-  // 5b. Best-effort disclosure of what the app injects into the model's context,
+  // 5b. Best-effort disclosure of what the ability injects into the model's context,
   // read from the ALREADY-VERIFIED bytes. Never blocks the vendor.
   if (opts.disclose !== false) {
     try {
@@ -226,9 +226,9 @@ async function setFileDependency(
 }
 
 /**
- * Print the app's attention surface — exactly what it injects into the model's
+ * Print the ability's attention surface — exactly what it injects into the model's
  * context — read from the Ed25519-verified tarball bytes. Best-effort: a parse
- * failure or a pre-feature app degrades to a one-line note.
+ * failure or a pre-feature ability degrades to a one-line note.
  */
 export async function renderAttentionSurface(tarball: Uint8Array, name: string): Promise<void> {
   const raw = await readTarEntry(tarball, 'package/attention-surface.json');
@@ -301,4 +301,4 @@ export function formatAttentionSurface(s: AttentionSurface, name: string): strin
   return `${lines.join('\n')}\n`;
 }
 
-export type { AppBundleManifest };
+export type { AbilityBundleManifest };

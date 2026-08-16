@@ -1,6 +1,6 @@
 # __NAME__
 
-A grounded multi-agent research harness. The models live *inside* the app — no
+A grounded multi-agent research harness. The models live *inside* the ability — no
 API key, and nothing on the inference path touches the network. Given a question
 it runs a pre-flight recon probe of each source, plans a set of research tasks, and
 dispatches a pool of agents that gather evidence in parallel (or in a dependency
@@ -33,14 +33,14 @@ same `reduce`, a different binding:
 ```sh
 npm run dev:desktop   # a native window (Electron): forks this cli as the engine
 npm run serve         # a local host serving browsers over ws://127.0.0.1:8787
-npm run dev:web       # …and the browser app that talks to it (Vite, :5173)
+npm run dev:web       # …and the browser ability that talks to it (Vite, :5173)
 ```
 
 ## The shape
 
 ```
 harness/
-  harness.ts     ← the one file that's yours: the command loop + app boot
+  harness.ts     ← the one file that's yours: the command loop + ability boot
   pipeline.ts    the tuned recon → plan → research → synth pipeline + policies
   protocol.ts    the events (↓) and commands (↑) your harness speaks
   state.ts       node-free reduce(events) → AppState (every view folds it)
@@ -51,14 +51,14 @@ prompts/         the 7 RACE/DRB-tuned .eta prompts — edit one to override it
 targets/
   cli/
     index.ts     boot: resolve the models, mount a view, run your harness
-    view.tsx     the terminal view (Ink) — swap it, or bring a whole app
+    view.tsx     the terminal view (Ink) — swap it, or bring a whole ability
   desktop/       the same harness in a native window (Electron + ipc binding)
     App.tsx      the shared React view (desktop + web) — folds the same reduce
-  web/           a local host (serve.ts) + browser app, over the wss binding
+  web/           a local host (serve.ts) + browser ability, over the wss binding
 models/
   llm/           the resident reasoning model (fetched on first run; gitignored)
   reranker/      the resident cross-encoder      (fetched on first run; gitignored)
-vendor/          signed AgentApps — Ed25519-verified tarballs, committed
+vendor/          signed Abilities — Ed25519-verified tarballs, committed
 harness.yml      targets + models
 ```
 
@@ -70,7 +70,18 @@ prompt; an empty `prompts/` is byte-identical to the baked defaults.
 ## Add capabilities
 
 ```sh
-npx lloyal-ai install <publisher>/<name>   # a signed AgentApp from apps.lloyal.ai
+npx lloyal-ai install <publisher>/<name>   # a signed Ability from apps.lloyal.ai
 ```
 
-Enable it in `harness/harness.ts` by adding its factory to `apps`.
+Enable it in `harness/harness.ts` by adding its factory to `abilities`.
+
+## Licence
+
+This project is yours — add whatever licence your organisation needs. The
+scaffolding that produced it is MIT and imposes nothing on your code.
+
+Your use of the HDK runtime (`@lloyal-labs/*`) is covered by the Functional
+Source License plus the [Lloyal Harness Builder Grant](https://github.com/lloyal-ai/hdk/blob/main/GRANT.md),
+under which building, distributing, selling and hosting a harness or an ability
+is always permitted and is never a Competing Use — including in direct
+competition with Lloyal's own products.

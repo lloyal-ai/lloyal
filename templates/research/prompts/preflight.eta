@@ -8,11 +8,11 @@ Judge by RELEVANCE, not count. Hits aren't proof of coverage — the search can 
 
 `report` exactly once: 2-4 lines naming what this source covers, with one piece of concrete evidence per covered entity (a file you read, a specific page, a snippet you saw). Report only what you found; don't list what you didn't.
 ---
-Source to probe: **<%= it.app.name %>** — <%= it.app.useWhen %>
-Search tool(s): <%= it.app.tools.join(", ") %>
-<% if (it.app.contents) { %>
+Source to probe: **<%= it.ability.name %>** — <%= it.ability.useWhen %>
+Search tool(s): <%= it.ability.tools.join(", ") %>
+<% if (it.ability.contents) { %>
 Contents:
-<%= it.app.contents %>
+<%= it.ability.contents %>
 <% } else { %>
 Contents: (this source has no static contents advert — judge entirely from probe results)
 <% } %>

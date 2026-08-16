@@ -12,7 +12,7 @@ import {
 } from '../scaffold/copy-tree.js';
 import { writeProjectMarker } from '../scaffold/write-marker.js';
 import { runInstall, printNextSteps, writeReadmeRunSteps } from '../scaffold/post-scaffold.js';
-import { verifyAndVendorApp, parseAppSpec } from '../scaffold/vendor-app.js';
+import { verifyAndVendorAbility, parseAbilitySpec } from '../scaffold/vendor-ability.js';
 import { runNewWizard, type TemplateKind, type WizardPrefill } from './new-wizard.js';
 
 const USAGE = [
@@ -41,7 +41,7 @@ const USAGE = [
   '  --skip-install',
   '                Do not run `npm install` after scaffolding (it runs by',
   '                default in an interactive terminal).',
-  '  --skip-apps   Do not fetch the template\'s default AgentApp(s). The scaffold',
+  '  --skip-abilities   Do not fetch the template\'s default Ability(s). The scaffold',
   '                then does NOT typecheck or run until you add them with',
   '                `lloyal install <spec>` — use it only for an offline',
   '                or hermetic scaffold.',
@@ -53,26 +53,26 @@ const USAGE = [
   '(fetched + verified on first run — no API key), then prints how to run each one.',
 ].join('\n');
 
-// Same grammar as `lloyal app:new`: identifier-safe lowercase that
+// Same grammar as `lloyal ability:new`: identifier-safe lowercase that
 // satisfies both directory and npm package-name conventions.
 const NAME_RE = /^[a-z][a-z0-9_-]{1,63}$/;
 const ALL_TARGETS: Target[] = ['cli', 'desktop', 'web'];
 
 /**
- * The signed AgentApp(s) each template runs by default, as `lloyal install`
+ * The signed Ability(s) each template runs by default, as `lloyal install`
  * specs (pinned for reproducibility). `new` fetches + Ed25519-verifies these and
  * vendors them as local `file:` deps — the SAME verified path as an explicitly
- * added app. The app is NOT a remote-URL npm dependency in the template
+ * added ability. The ability is NOT a remote-URL npm dependency in the template
  * package.json (npm 12 blocks those, and a plain dep would skip verification);
  * it is written into package.json only after it is verified + vendored here.
  *
  * These are NOT optional extras: each template's `harness/harness.ts` imports
  * these packages at the top level and lists their factories in `export const
- * apps`. A scaffold without them does not typecheck (TS2307) and cannot boot
+ * abilities`. A scaffold without them does not typecheck (TS2307) and cannot boot
  * (ERR_MODULE_NOT_FOUND) — so vendoring is gated ONLY on the explicit
- * `--skip-apps` escape hatch, never on `--skip-install` or on being a TTY.
+ * `--skip-abilities` escape hatch, never on `--skip-install` or on being a TTY.
  */
-export const DEFAULT_APPS: Record<TemplateKind, string[]> = {
+export const DEFAULT_ABILITIES: Record<TemplateKind, string[]> = {
   basic: ['lloyal/wikipedia@1.2.0'],
   research: ['lloyal/corpus@1.3.0', 'lloyal/web@1.3.0'],
 };
@@ -102,7 +102,7 @@ export const newCommand: Command = {
         targets: { type: 'string' },
         model: { type: 'string' },
         'skip-install': { type: 'boolean' },
-        'skip-apps': { type: 'boolean' },
+        'skip-abilities': { type: 'boolean' },
         yes: { type: 'boolean', short: 'y' },
       },
       allowPositionals: true,
@@ -153,13 +153,13 @@ export const newCommand: Command = {
     // scaffolding a project the user can't run yet is a dead-end. Skipped in
     // non-TTY (CI installs itself) or with --skip-install.
     const install = Boolean(process.stdout.isTTY) && !values['skip-install'];
-    // Vendoring the template's default apps is a SEPARATE decision from running
+    // Vendoring the template's default abilities is a SEPARATE decision from running
     // `npm install`. The template's harness.ts imports them at the top level, so
     // skipping them emits a project that cannot typecheck or boot — that must
     // never be an implicit consequence of a pipe, of CI, or of --skip-install.
-    // Only the explicit --skip-apps opts out.
-    const vendorApps = !values['skip-apps'];
-    return performScaffold(plan, parentDir, { install, vendorApps });
+    // Only the explicit --skip-abilities opts out.
+    const vendorAbilities = !values['skip-abilities'];
+    return performScaffold(plan, parentDir, { install, vendorAbilities });
   },
 };
 
@@ -228,7 +228,7 @@ function parseTargets(csv: string | undefined): { targets: Target[] } | { error:
 async function performScaffold(
   plan: ScaffoldPlan,
   parentDir: string,
-  opts: { install: boolean; vendorApps: boolean },
+  opts: { install: boolean; vendorAbilities: boolean },
 ): Promise<number> {
   const dest = join(parentDir, plan.name);
 
@@ -251,7 +251,7 @@ async function performScaffold(
     // ENOENT — the destination is free.
   }
 
-  const defaultApps = DEFAULT_APPS[plan.template] ?? [];
+  const defaultAbilities = DEFAULT_ABILITIES[plan.template] ?? [];
 
   const templateDir = resolveTemplateDir(plan.template);
   try {
@@ -265,12 +265,12 @@ async function performScaffold(
     applyModelChoice(dest, { llm: plan.llm, context: recommendedContext });
     // Provenance: record which template + surfaces this project came from so
     // `targets:add` knows which template's target subtree to copy back, and
-    // which app specs the harness needs so `bin/run.js` can name them if one is
+    // which ability specs the harness needs so `bin/run.js` can name them if one is
     // missing at boot.
     writeProjectMarker(dest, {
       template: plan.template,
       targets: plan.targets,
-      apps: defaultApps,
+      abilities: defaultAbilities,
     });
     // Fill the README's run instructions for exactly the surfaces we kept.
     writeReadmeRunSteps(dest, plan.targets);
@@ -285,34 +285,34 @@ async function performScaffold(
     `scaffolded ${plan.name} (${plan.template}) · targets: ${plan.targets.join(', ')} · model: ${plan.llm}\n`,
   );
 
-  // Fetch + Ed25519-verify the template's default app(s) and vendor them as
+  // Fetch + Ed25519-verify the template's default ability(s) and vendor them as
   // local `file:` deps (npm never fetches a remote URL — npm-12 clean, and the
-  // default app gets the SAME signature verification as any added app). This
+  // default ability gets the SAME signature verification as any added ability). This
   // runs whether or not we go on to `npm install`, because the template's
   // harness.ts imports these packages: without the `file:` deps in package.json
   // the user's OWN `npm install` still leaves a project that fails typecheck and
-  // cannot boot. Only --skip-apps opts out. A network/verify failure warns +
+  // cannot boot. Only --skip-abilities opts out. A network/verify failure warns +
   // continues (an offline scaffold is still a scaffold) and the spec is reported
   // as pending so the user can add it with `lloyal install`.
-  const pendingApps: string[] = [];
-  if (opts.vendorApps) {
-    for (const rawSpec of defaultApps) {
+  const pendingAbilities: string[] = [];
+  if (opts.vendorAbilities) {
+    for (const rawSpec of defaultAbilities) {
       try {
-        const v = await verifyAndVendorApp(dest, parseAppSpec(rawSpec), { disclose: false });
+        const v = await verifyAndVendorAbility(dest, parseAbilitySpec(rawSpec), { disclose: false });
         process.stdout.write(`  vendored ${v.name}@${v.version} → ${v.vendorRelPath}\n`);
       } catch (err) {
         process.stderr.write(
-          `lloyal: could not fetch default app ${rawSpec}: ${err instanceof Error ? err.message : String(err)}\n`,
+          `lloyal: could not fetch default ability ${rawSpec}: ${err instanceof Error ? err.message : String(err)}\n`,
         );
-        pendingApps.push(rawSpec);
+        pendingAbilities.push(rawSpec);
       }
     }
   } else {
-    pendingApps.push(...defaultApps);
+    pendingAbilities.push(...defaultAbilities);
   }
 
   const installed = opts.install ? await runInstall(dest) : false;
-  printNextSteps({ name: plan.name, targets: plan.targets, installed, pendingApps });
+  printNextSteps({ name: plan.name, targets: plan.targets, installed, pendingAbilities });
   return 0;
 }
 

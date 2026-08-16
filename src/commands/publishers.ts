@@ -25,7 +25,7 @@ const USAGE = [
   'Options (register):',
   '  --handle <handle>   The publisher handle to claim (matches `[a-z][a-z0-9_-]{1,63}`).',
   '                      First-come-first-served except `lloyal` (reserved). Handles',
-  '                      published apps are namespaced under: `<handle>/<short-name>`.',
+  '                      published abilities are namespaced under: `<handle>/<short-name>`.',
   '  --yes               Accept the publisher ToS without an interactive prompt. Required',
   '                      when running non-interactively. The CLI still prints the ToS URL.',
   '  -h, --help          Show this help',

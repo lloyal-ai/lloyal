@@ -1,19 +1,19 @@
 /**
  * Embedded Cloudflare Access OAuth client for `lloyal publish`.
  *
- * Implements RFC 8252 (OAuth 2.0 for native apps — loopback redirect URI),
+ * Implements RFC 8252 (OAuth 2.0 for native abilities — loopback redirect URI),
  * RFC 7636 (PKCE), RFC 7591 (dynamic client registration), and RFC 9728
  * (OAuth 2.0 protected resource metadata discovery) against Cloudflare
  * Access's Managed OAuth endpoints.
  *
- * This module exists so external app developers running `lloyal
+ * This module exists so external ability developers running `lloyal
  * publish` do not need to install a separate vendor CLI (`cloudflared`)
  * just to authenticate. Everything here uses Node built-ins only.
  *
  * Token cache lives at `$XDG_CACHE_HOME/lloyal/auth.json` (defaulting to
  * `~/.cache/lloyal/auth.json` when `XDG_CACHE_HOME` isn't set), mode 0600.
  * The `lloyal/` namespace is shared with the rest of the Lloyal channel
- * caches (installed bundles under `apps/`, downloaded LLM models under
+ * caches (installed bundles under `abilities/`, downloaded LLM models under
  * `models/`). First run opens a browser; subsequent runs are silent until
  * the access_token expires (and is silently refreshed) or the
  * refresh_token's grant expires.

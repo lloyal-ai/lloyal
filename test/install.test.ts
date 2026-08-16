@@ -1,6 +1,6 @@
 /**
  * Tests for `harness-cli/src/commands/install.ts` + the shared
- * `verifyAndVendorApp` primitive — the verify → vendor-as-`file:` → `npm install`
+ * `verifyAndVendorAbility` primitive — the verify → vendor-as-`file:` → `npm install`
  * → audit flow. npm never fetches a remote URL; the CLI verifies the signed
  * tarball itself and materializes it locally.
  *
@@ -41,7 +41,7 @@ vi.mock('../src/verify', async (importActual) => {
   return {
     ...actual,
     fetchAndVerifyCatalog: vi.fn(),
-    resolveAppVersion: vi.fn(),
+    resolveAbilityVersion: vi.fn(),
     fetchAndVerifyManifest: vi.fn(),
     verifyBundle: vi.fn(),
     sha512Integrity: vi.fn(),
@@ -49,14 +49,14 @@ vi.mock('../src/verify', async (importActual) => {
 });
 
 import { installCommand } from '../src/commands/install';
-import { verifyAndVendorApp, parseAppSpec } from '../src/scaffold/vendor-app';
+import { verifyAndVendorAbility, parseAbilitySpec } from '../src/scaffold/vendor-ability';
 import * as verify from '../src/verify';
 
 // ── Test scaffolding ─────────────────────────────────────────────
 
 const TARBALL_URL = 'https://apps.lloyal.ai/v1/bundles/lloyal__wikipedia-1.0.0.tgz';
 const MANIFEST_URL = 'https://apps.lloyal.ai/v1/bundles/lloyal__wikipedia-1.0.0.manifest.json';
-const IMPORT_NAME = '@lloyal-labs/wikipedia-app';
+const IMPORT_NAME = '@lloyal-labs/wikipedia-ability';
 const SCOPED_NAME = 'lloyal/wikipedia';
 const VERSION = '1.0.0';
 const TARBALL_BYTES = new Uint8Array([0x1f, 0x8b, 0x08, 0x00]); // gzip-magic stub
@@ -86,7 +86,7 @@ beforeEach(async () => {
 
   // Default mock returns for the network leg. Individual tests override.
   vi.mocked(verify.fetchAndVerifyCatalog).mockResolvedValue({} as never);
-  vi.mocked(verify.resolveAppVersion).mockReturnValue({
+  vi.mocked(verify.resolveAbilityVersion).mockReturnValue({
     version: VERSION,
     manifestUrl: MANIFEST_URL,
     tarballUrl: TARBALL_URL,
@@ -146,7 +146,7 @@ interface LockEntryShape {
 }
 
 /**
- * Write `package.json` (no app dep — `verifyAndVendorApp` adds it) and,
+ * Write `package.json` (no ability dep — `verifyAndVendorAbility` adds it) and,
  * optionally, a `package-lock.json` fixture standing in for what npm would write.
  */
 async function seedProject(opts: {
@@ -183,12 +183,12 @@ async function depSpec(): Promise<string | undefined> {
   return pkg.dependencies?.[IMPORT_NAME];
 }
 
-// ── verifyAndVendorApp ───────────────────────────────────────────
+// ── verifyAndVendorAbility ───────────────────────────────────────────
 
-describe('verifyAndVendorApp', () => {
+describe('verifyAndVendorAbility', () => {
   it('verifies then writes vendor/<flat>.tgz + manifest sidecar + a file: dep', async () => {
     await seedProject();
-    const out = await verifyAndVendorApp(cwd, parseAppSpec(SCOPED_NAME), { disclose: false });
+    const out = await verifyAndVendorAbility(cwd, parseAbilitySpec(SCOPED_NAME), { disclose: false });
 
     expect(out.importName).toBe(IMPORT_NAME);
     expect(out.vendorRelPath).toBe(VENDOR_REL);
@@ -204,14 +204,14 @@ describe('verifyAndVendorApp', () => {
     await seedProject();
     vi.mocked(verify.sha512Integrity).mockResolvedValue('sha512-DIFFERENT==');
 
-    await expect(verifyAndVendorApp(cwd, parseAppSpec(SCOPED_NAME))).rejects.toThrow();
+    await expect(verifyAndVendorAbility(cwd, parseAbilitySpec(SCOPED_NAME))).rejects.toThrow();
     expect(await exists(VENDOR_REL)).toBe(false);
     expect(await depSpec()).toBeUndefined();
   });
 
   it('rejects a malformed spec at parse time', () => {
-    expect(() => parseAppSpec('Not/AValidName!')).toThrow();
-    expect(parseAppSpec('lloyal/web@^1.0.0')).toEqual({ name: 'lloyal/web', semver: '^1.0.0' });
+    expect(() => parseAbilitySpec('Not/AValidName!')).toThrow();
+    expect(parseAbilitySpec('lloyal/web@^1.0.0')).toEqual({ name: 'lloyal/web', semver: '^1.0.0' });
   });
 });
 
@@ -298,7 +298,7 @@ describe('installCommand', () => {
     expect(recordedNpmCalls().map((c) => c[0])).toEqual(['install', 'uninstall']);
   });
 
-  it('invalid app name: exit 1, nothing invoked', async () => {
+  it('invalid ability name: exit 1, nothing invoked', async () => {
     const code = await installCommand.run(['Not/AValidName!']);
     expect(code).toBe(1);
     expect(recordedNpmCalls().length).toBe(0);

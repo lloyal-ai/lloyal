@@ -9,10 +9,10 @@
  * established. It reads `RunnerCtx` (see ./runner-ctx.ts) for the edge-shell
  * concerns it can't own: the wind-down / cancel signals, the live config, the
  * trace sink. (The reranker is NOT a Runner concern — the boot's
- * `provisionAppModels` publishes it on `RerankerCtx`.)
+ * `provisionAbilityModels` publishes it on `RerankerCtx`.)
  *
  * The pipeline itself (`runQuery` / `runResearchPlan` / policies / the 7 tuned
- * `.eta` prompts) lives in ./pipeline.ts — this file is the command loop + app
+ * `.eta` prompts) lives in ./pipeline.ts — this file is the command loop + ability
  * boot that drives it. Edit the pipeline to change what your intelligence does;
  * drop a `prompts/<name>.eta` into the project to override a tuned prompt.
  *
@@ -32,19 +32,20 @@ import {
   reconstructBranch,
 } from "@lloyal-labs/lloyal-agents";
 import type {
-  App,
-  AppFactory,
-  AppRegistry,
-  AppConfigStore,
+  Ability,
+  AbilityFactory,
+  AbilityRegistry,
+  AbilityConfigStore,
 } from "@lloyal-labs/lloyal-agents";
 import type { EventBus } from "@lloyal-labs/binding";
 import {
   createInMemoryConfigStore,
-  createAppRegistry,
+  createAbilityRegistry,
 } from "@lloyal-labs/rig";
 import type { PlanResult } from "@lloyal-labs/rig";
-import { createWebApp } from "@lloyal-labs/web-app";
-import { createCorpusApp } from "@lloyal-labs/corpus-app";
+import { TASK_ROUTING_KEY } from "@lloyal-labs/rig";
+import { createWebAbility } from "@lloyal-labs/web-ability";
+import { createCorpusAbility } from "@lloyal-labs/corpus-ability";
 import { RunnerCtx } from "./runner-ctx.js";
 import {
   runQuery,
@@ -56,39 +57,39 @@ import {
   type Effort,
 } from "./pipeline.js";
 import type { WorkflowEvent, Command } from "./protocol.js";
-import type { AppDescriptor } from "./state.js";
+import type { AbilityDescriptor } from "./state.js";
 import { RunDirSink } from "./run-dir.js";
 import { resolvePath } from "./path-utils.js";
 
-// The two first-party app factories this harness enables. Before enabling, the
-// boot's `provisionAppModels` reads whatever Services each app declares
+// The two first-party ability factories this harness enables. Before enabling, the
+// boot's `provisionAbilityModels` reads whatever Services each ability declares
 // (corpus/web both declare `services: ['reranker']`), resolves + loads the
 // backing model, and publishes it on `RerankerCtx` — so the harness stays IO-free.
-// Install more with `lloyal install <app>` and add the factory here.
-export const apps: AppFactory[] = [createCorpusApp, createWebApp];
+// Install more with `lloyal install <ability>` and add the factory here.
+export const abilities: AbilityFactory[] = [createCorpusAbility, createWebAbility];
 
 const WEB_APP = "web";
 const CORPUS_APP = "corpus";
 
-/** Name → factory for the two first-party apps this build ships. Drives the
+/** Name → factory for the two first-party abilities this build ships. Drives the
  *  `set_app_config` re-enable path (NOT config-write routing, which is
  *  name-driven by the command payload). Returns undefined for unknown names. */
-const APP_FACTORIES: Record<string, AppFactory> = {
-  [WEB_APP]: createWebApp,
-  [CORPUS_APP]: createCorpusApp,
+const APP_FACTORIES: Record<string, AbilityFactory> = {
+  [WEB_APP]: createWebAbility,
+  [CORPUS_APP]: createCorpusAbility,
 };
-function factoryFor(name: string): AppFactory | undefined {
+function factoryFor(name: string): AbilityFactory | undefined {
   return APP_FACTORIES[name];
 }
 
-/** Whether the named app's factory needs stored config to enable. The web app
- *  runs config-less (keyless search fallback); the corpus app needs a path. */
+/** Whether the named ability's factory needs stored config to enable. The web ability
+ *  runs config-less (keyless search fallback); the corpus ability needs a path. */
 function appRequiresConfig(name: string): boolean {
   return name !== WEB_APP;
 }
 
-/** Resolve path-shaped string values in an app-config object at the UI→harness
- *  boundary — no per-app name knowledge. A value is a path when its key ends in
+/** Resolve path-shaped string values in an ability-config object at the UI→harness
+ *  boundary — no per-ability name knowledge. A value is a path when its key ends in
  *  "Path" or the string starts with ~ / . */
 function resolveConfigPaths(
   values: Record<string, unknown>,
@@ -112,19 +113,19 @@ const MAX_TOOL_TURNS = 10;
 
 // ── Planner context ──────────────────────────────────────────────
 
-/** Summarize the registered apps for the planner prompt: the source catalog the
- *  planner routes against. With ≥2 sources the planner assigns each task's `app`
+/** Summarize the registered abilities for the planner prompt: the source catalog the
+ *  planner routes against. With ≥2 sources the planner assigns each task's routing key
  *  to the source that holds it — grounded by the pre-flight coverage probe that
  *  runQuery folds into the context alongside this catalog. */
-function buildPlannerContext(apps: readonly App[]): string {
-  if (apps.length === 0) return "";
+function buildPlannerContext(abilities: readonly Ability[]): string {
+  if (abilities.length === 0) return "";
   const lines: string[] = [
-    "Knowledge sources available for this research. Assign each task's `app` to the source that holds it, using its EXACT name below; the pre-flight `Source coverage` probe (when present) is the primary signal for which source covers what.",
+    `Knowledge sources available for this research. Assign each task's \`${TASK_ROUTING_KEY}\` to the source that holds it, using its EXACT name below; the pre-flight \`Source coverage\` probe (when present) is the primary signal for which source covers what.`,
   ];
-  for (const app of apps) {
-    const protocol = app.manifest.protocol;
+  for (const ability of abilities) {
+    const protocol = ability.manifest.protocol;
     lines.push("", `### ${protocol.name}`, protocol.useWhen);
-    const toc = app.source.promptData()["toc"];
+    const toc = ability.source.promptData()["toc"];
     if (typeof toc === "string" && toc) {
       lines.push("Files and top-level topics available in this source:", toc);
     }
@@ -132,24 +133,24 @@ function buildPlannerContext(apps: readonly App[]): string {
   return lines.join("\n");
 }
 
-// ── Installed-AgentApps surfacing (Settings drawer) ──────────────
+// ── Installed-Abilities surfacing (Settings drawer) ──────────────
 //
-// Manifest-only (the app-catalog fetch was stripped from this template — no
+// Manifest-only (the ability-catalog fetch was stripped from this template — no
 // hardcoded apps.lloyal.ai URL in a scaffold, and the austere views have no
-// Settings drawer). One descriptor per registry-ENABLED app, built from the
-// app's OWN manifest. Display-only; forwarded to the renderer via `apps:state`.
+// Settings drawer). One descriptor per registry-ENABLED ability, built from the
+// ability's OWN manifest. Display-only; forwarded to the renderer via `abilities:state`.
 // The catalog-metadata join (title/iconUrl/entitlements) reasoning.run does is
 // intentionally absent here.
 
-/** Build view-ready descriptors for every registry-enabled app, from each app's
+/** Build view-ready descriptors for every registry-enabled ability, from each ability's
  *  own manifest. Display-only — never throws on a missing field. */
 function* buildAppDescriptors(
-  registry: AppRegistry,
-  configStore: AppConfigStore,
-): Operation<AppDescriptor[]> {
-  const descriptors: AppDescriptor[] = [];
-  for (const app of registry.enabled()) {
-    const manifest = app.manifest;
+  registry: AbilityRegistry,
+  configStore: AbilityConfigStore,
+): Operation<AbilityDescriptor[]> {
+  const descriptors: AbilityDescriptor[] = [];
+  for (const ability of registry.enabled()) {
+    const manifest = ability.manifest;
     const config = (yield* configStore.get(manifest.name)) ?? {};
     descriptors.push({
       name: manifest.name,
@@ -204,7 +205,7 @@ class HarnessExit extends Error {
 // ── harness — the Layer-3 entrypoint (platform contract) ─────────
 //
 // Runs INSIDE a runtime substrate the boot established (RerankerCtx via the
-// boot's `provisionAppModels`, the agent contexts `initAgents` sets). It reads `RunnerCtx`
+// boot's `provisionAbilityModels`, the agent contexts `initAgents` sets). It reads `RunnerCtx`
 // for the edge-shell concerns it can't own. `events` is the UI `WorkflowEvent`
 // bus; `agentEvents` (from `initAgents`) is the internal agent channel the
 // forwarder relays into `events` + `RunDirSink`. Ends on Session close.
@@ -225,7 +226,7 @@ export function* harness(
   });
 
   // Replay mode: rebuild the spine from the captured checkpoint and install it as
-  // the session trunk BEFORE the apps register their listeners.
+  // the session trunk BEFORE the abilities register their listeners.
   if (runner.replayCheckpoint) {
     const replaySpine = yield* reconstructBranch(runner.replayCheckpoint);
     session.trunk = replaySpine;
@@ -240,21 +241,21 @@ export function* harness(
     }
   });
 
-  // ── App registry ───────────────────────────────────────────
+  // ── Ability registry ───────────────────────────────────────────
   // The reranker is already published on RerankerCtx by the boot's
-  // `provisionAppModels` (before this harness runs), so the corpus/web factories
-  // read it on enable. The registry owns each app's detached scope and tears them
-  // down on scope exit. It also sets AppRegistryCtx, which the research pool reads
+  // `provisionAbilityModels` (before this harness runs), so the corpus/web factories
+  // read it on enable. The registry owns each ability's detached scope and tears them
+  // down on scope exit. It also sets AbilityRegistryCtx, which the research pool reads
   // to render the spine and resolve per-spawn tool scope.
   yield* WindDown.set(runner.windDown);
   yield* CancelAgent.set(runner.cancelAgent);
   const configStore = createInMemoryConfigStore();
-  // Seed the config store generically from the per-app config map — no app-name
-  // knowledge. Each app's factory reads its own entry on enable.
-  for (const [name, cfg] of Object.entries(runner.config().apps)) {
+  // Seed the config store generically from the per-ability config map — no ability-name
+  // knowledge. Each ability's factory reads its own entry on enable.
+  for (const [name, cfg] of Object.entries(runner.config().abilities)) {
     yield* configStore.set(name, cfg);
   }
-  const registry = yield* createAppRegistry({ configStore });
+  const registry = yield* createAbilityRegistry({ configStore });
 
   // Per-boot preflight-coverage memo, spanning every command-loop iteration.
   yield* CoverageCacheCtx.set(yield* createCoverageCache());
@@ -265,15 +266,15 @@ export function* harness(
   const promptsDir = path.join(process.cwd(), "prompts");
   if (fs.existsSync(promptsDir)) yield* PromptsCtx.set(promptsDir);
 
-  // Enable the corpus app first so installed()[0] is corpus when present. It only
+  // Enable the corpus ability first so installed()[0] is corpus when present. It only
   // enables when the user has stored config for it (the factory needs a
-  // corpusPath). A bad path surfaces a toast and leaves the app disabled.
-  const corpusBootCfg = runner.config().apps[CORPUS_APP];
+  // corpusPath). A bad path surfaces a toast and leaves the ability disabled.
+  const corpusBootCfg = runner.config().abilities[CORPUS_APP];
   if (corpusBootCfg && Object.keys(corpusBootCfg).length > 0) {
     events.send({ type: "weights:label", label: "Indexing corpus…" });
     try {
-      const corpusApp = yield* registry.enable(createCorpusApp);
-      const pdToc = corpusApp.source.promptData()["toc"];
+      const corpusAbility = yield* registry.enable(createCorpusAbility);
+      const pdToc = corpusAbility.source.promptData()["toc"];
       const pd = { toc: typeof pdToc === "string" ? pdToc : undefined };
       events.send({
         type: "corpus:indexed",
@@ -288,10 +289,10 @@ export function* harness(
       });
     }
   }
-  // Web is always available: createWebApp falls back to a keyless provider when no
+  // Web is always available: createWebAbility falls back to a keyless provider when no
   // tavilyKey is configured. Enable it unconditionally.
   try {
-    yield* registry.enable(createWebApp);
+    yield* registry.enable(createWebAbility);
   } catch (err) {
     events.send({
       type: "ui:error",
@@ -299,15 +300,15 @@ export function* harness(
     });
   }
 
-  // Surface the installed AgentApps into the renderer. Re-call after every
+  // Surface the installed Abilities into the renderer. Re-call after every
   // registry enable/disable/config change so the drawer stays in sync.
-  function* emitApps(): Operation<void> {
-    const apps = yield* buildAppDescriptors(registry, configStore);
-    yield* agentEvents.send({ type: "apps:state", apps });
+  function* emitAbilities(): Operation<void> {
+    const abilities = yield* buildAppDescriptors(registry, configStore);
+    yield* agentEvents.send({ type: "abilities:state", abilities });
   }
 
   // Emit once boot completes (web/corpus enabled).
-  yield* emitApps();
+  yield* emitAbilities();
 
   events.send({ type: "weights:done" });
   events.send({ type: "ui:composer" });
@@ -331,7 +332,7 @@ export function* harness(
     }
     if (registry.enabled().length === 0) {
       throw new HarnessExit(
-        "No source configured. Enable an app in harness/harness.ts — the web app runs keyless.",
+        "No source configured. Enable an ability in harness/harness.ts — the web ability runs keyless.",
         2,
       );
     }
@@ -368,7 +369,7 @@ export function* harness(
     clarifyExchanged: boolean;
     mode: "flat" | "deep";
     wallStartMs: number;
-    appFilter: readonly string[];
+    abilityFilter: readonly string[];
   } | null = null;
 
   // ── Run-in-fiber (Stop escape hatch) ───────────────────────
@@ -399,12 +400,12 @@ export function* harness(
     }
   }
 
-  // Per-query App participation. Default: every enabled app is included.
+  // Per-query Ability participation. Default: every enabled ability is included.
   const participation: Record<string, boolean> = {};
   const seedParticipation = (): void => {
-    for (const app of registry.enabled()) {
-      if (participation[app.manifest.name] === undefined) {
-        participation[app.manifest.name] = true;
+    for (const ability of registry.enabled()) {
+      if (participation[ability.manifest.name] === undefined) {
+        participation[ability.manifest.name] = true;
       }
     }
   };
@@ -424,7 +425,7 @@ export function* harness(
       ...harnessOpts,
       reasoningMode: mode,
       wallStartMs,
-      appFilter: submissionFilter,
+      abilityFilter: submissionFilter,
       onStart: () => startRunDir(runner.initialQuery!, mode),
     });
     if (result.type === "research_plan") {
@@ -434,7 +435,7 @@ export function* harness(
         clarifyExchanged: false,
         mode,
         wallStartMs,
-        appFilter: submissionFilter,
+        abilityFilter: submissionFilter,
       };
       yield* agentEvents.send({ type: "ui:plan_review" });
     } else if (result.type === "clarify") {
@@ -450,7 +451,7 @@ export function* harness(
         clarifyExchanged: false,
         mode,
         wallStartMs,
-        appFilter: submissionFilter,
+        abilityFilter: submissionFilter,
       };
     } else {
       yield* agentEvents.send({ type: "ui:composer" });
@@ -517,9 +518,9 @@ export function* harness(
           const needsConfig = appRequiresConfig(cmd.name);
           if (!isClear || !needsConfig) {
             try {
-              const app = yield* registry.enable(factory);
+              const ability = yield* registry.enable(factory);
               const pd = (
-                app.source as { promptData?: () => { toc?: string } }
+                ability.source as { promptData?: () => { toc?: string } }
               ).promptData?.();
               if (pd?.toc !== undefined) {
                 events.send({
@@ -547,7 +548,7 @@ export function* harness(
         participation[cmd.name] = true;
 
         const saved = runner.saveConfig({
-          apps: { [cmd.name]: resolvedValues },
+          abilities: { [cmd.name]: resolvedValues },
         });
         yield* agentEvents.send({
           type: "config:updated",
@@ -557,7 +558,7 @@ export function* harness(
           gitignored: saved.gitignored,
           skipped: saved.skipped,
         });
-        yield* emitApps();
+        yield* emitAbilities();
       } else if (cmd.type === "set_output_dir") {
         const resolved = cmd.path ? resolvePath(cmd.path) : "";
         const saved = runner.saveConfig({
@@ -634,7 +635,7 @@ export function* harness(
                 reasoningMode: cmd.mode,
                 effort: currentEffort,
                 wallStartMs,
-                appFilter: submissionFilter,
+                abilityFilter: submissionFilter,
                 isAsk: cmd.skipPlanner,
               });
               yield* agentEvents.send({ type: "ui:composer" });
@@ -660,7 +661,7 @@ export function* harness(
               effort: currentEffort,
               context: buildPlannerContext(registry.enabled()),
               wallStartMs,
-              appFilter: submissionFilter,
+              abilityFilter: submissionFilter,
               onStart: () => startRunDir(queryText, queryMode),
             });
             if (result.type === "research_plan") {
@@ -670,7 +671,7 @@ export function* harness(
                 clarifyExchanged: false,
                 mode: queryMode,
                 wallStartMs,
-                appFilter: submissionFilter,
+                abilityFilter: submissionFilter,
               };
               yield* agentEvents.send({ type: "ui:plan_review" });
             } else if (result.type === "clarify") {
@@ -686,7 +687,7 @@ export function* harness(
                 clarifyExchanged: false,
                 mode: queryMode,
                 wallStartMs,
-                appFilter: submissionFilter,
+                abilityFilter: submissionFilter,
               };
             } else {
               yield* agentEvents.send({ type: "ui:composer" });
@@ -702,7 +703,7 @@ export function* harness(
           }
         });
       } else if (cmd.type === "submit_clarification" && pendingPlan) {
-        const { query: origQuery, mode, wallStartMs, appFilter } = pendingPlan;
+        const { query: origQuery, mode, wallStartMs, abilityFilter } = pendingPlan;
         const priorPlan = pendingPlan;
         yield* call(() => session.prefillUser(cmd.answer));
         yield* startRun(function* (clearIfCurrent) {
@@ -713,7 +714,7 @@ export function* harness(
               effort: currentEffort,
               context: buildPlannerContext(registry.enabled()),
               wallStartMs,
-              appFilter,
+              abilityFilter,
               onStart: () => startRunDir(origQuery, mode),
             });
             if (result.type === "research_plan") {
@@ -759,7 +760,7 @@ export function* harness(
               effort: currentEffort,
               context: buildPlannerContext(registry.enabled()),
               wallStartMs: priorPlan.wallStartMs,
-              appFilter: priorPlan.appFilter,
+              abilityFilter: priorPlan.abilityFilter,
               onStart: () => startRunDir(priorPlan.query, nextMode),
             });
             if (result.type === "research_plan") {
@@ -809,7 +810,7 @@ export function* harness(
                 reasoningMode: acceptedPlan.mode,
                 effort: currentEffort,
                 wallStartMs: acceptedPlan.wallStartMs,
-                appFilter: acceptedPlan.appFilter,
+                abilityFilter: acceptedPlan.abilityFilter,
                 userSidePending: acceptedPlan.clarifyExchanged,
               },
             );

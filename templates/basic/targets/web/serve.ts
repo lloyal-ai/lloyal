@@ -11,7 +11,7 @@
  * (wss, here) differs.
  *
  * `npm run serve` builds + starts this; then `npm run dev:web` serves the browser
- * app that talks to it. Config from `harness.yml` + env (PORT / HOST /
+ * ability that talks to it. Config from `harness.yml` + env (PORT / HOST /
  * MAX_SESSIONS). Loopback + no-auth for local dev — TLS/auth terminate upstream.
  */
 import { readFileSync, statSync } from "node:fs";
@@ -24,7 +24,7 @@ import type { EventBus } from "@lloyal-labs/binding";
 import { resolveModel } from "@lloyal-labs/rig/node";
 import { parse } from "yaml";
 import { createServedHostDriver } from "./driver.js";
-import { apps } from "../../harness/harness.js";
+import { abilities } from "../../harness/harness.js";
 import { runServedSession } from "../../harness/served-session.js";
 import type { WorkflowEvent, Command } from "../../harness/protocol.js";
 import type { Config } from "../../harness/config-types.js";
@@ -87,13 +87,13 @@ main(function* () {
     }),
   );
 
-  // Resolve the reranker to a concrete path ONLY if an enabled app declares the
-  // service — the default wikipedia app needs none, so we skip the ~630 MB fetch.
+  // Resolve the reranker to a concrete path ONLY if an enabled ability declares the
+  // service — the default wikipedia ability needs none, so we skip the ~630 MB fetch.
   // resolveModel honors a harness.yml pin (id or path) and digest-verifies on
   // first run, so `cfg.model.reranker` is then always a resolved PATH (never a
   // bare id) — the per-session provisioning below uses it as-is.
   let rerankerPath: string | undefined;
-  const needsReranker = apps.some((a) => (a.manifest?.services ?? []).includes("reranker"));
+  const needsReranker = abilities.some((a) => (a.manifest?.services ?? []).includes("reranker"));
   if (needsReranker) {
     rerankerPath = yield* call(() =>
       resolveModel({
@@ -111,11 +111,11 @@ main(function* () {
   // The live config the harness reads via RunnerCtx (built into a per-session
   // Runner inside runServedSession). Every Session's context is created over the
   // one resident model; the reranker (if any) is loaded per-session by
-  // provisionAppModels from this resolved path.
+  // provisionAbilityModels from this resolved path.
   const cfg: Config = {
     version: 1,
     sources: {},
-    apps: {},
+    abilities: {},
     surface: "web",
     // `id` + `sizeBytes` feed the measured boot header the harness emits on
     // `ready`; every served session renders the same resident-model facts.

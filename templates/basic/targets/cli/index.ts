@@ -20,8 +20,8 @@ import { main, call, ensure, createSignal } from "effection";
 import { createBus } from "@lloyal-labs/binding";
 import { ipc, ndjson } from "@lloyal-labs/binding/node";
 import { createContext } from "@lloyal-labs/lloyal.node";
-import { resolveModel, provisionAppModels } from "@lloyal-labs/rig/node";
-import { harness, apps } from "../../harness/harness.js";
+import { resolveModel, provisionAbilityModels } from "@lloyal-labs/rig/node";
+import { harness, abilities } from "../../harness/harness.js";
 import { RunnerCtx } from "../../harness/runner-ctx.js";
 import { makeEdgeRunner } from "../../harness/served-runtime.js";
 import type { Command, WorkflowEvent } from "../../harness/protocol.js";
@@ -103,18 +103,18 @@ main(function* () {
     }),
   );
 
-  // Provision any auxiliary model an enabled app needs (a reranker, etc.) BEFORE
-  // the harness enables its apps. No-op for the default (wikipedia needs none);
-  // add a reranker-requiring app to `apps` and its model is fetched + verified
+  // Provision any auxiliary model an enabled ability needs (a reranker, etc.) BEFORE
+  // the harness enables its abilities. No-op for the default (wikipedia needs none);
+  // add a reranker-requiring ability to `abilities` and its model is fetched + verified
   // here, then injected via RerankerCtx.
   let fetchingReranker = false;
   try {
-    yield* provisionAppModels({
-      apps,
+    yield* provisionAbilityModels({
+      abilities,
       projectRoot: process.cwd(),
       reranker: config.model?.reranker,
-      // No-op for the default wikipedia app; sizes the reranker the instant a
-      // reranker-using app (corpus/web) is added to `apps`.
+      // No-op for the default wikipedia ability; sizes the reranker the instant a
+      // reranker-using ability (corpus/web) is added to `abilities`.
       rerankerLoad: { nSeqMax: 10, nCtx: 16384 },
       onProgress: (got, total) => {
         fetchingReranker = true;
@@ -139,7 +139,7 @@ main(function* () {
   const cfg: Config = {
     version: 1,
     sources: {},
-    apps: {},
+    abilities: {},
     surface,
     model: {
       path: modelPath,

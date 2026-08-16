@@ -26,30 +26,30 @@ import {
   withSpine,
   renderTemplate,
   DefaultAgentPolicy,
-  AppRegistryCtx,
+  AbilityRegistryCtx,
   WindDown,
   CancelAgent,
 } from "@lloyal-labs/lloyal-agents";
-import type { App, AppFactory, AgentRenderCtx } from "@lloyal-labs/lloyal-agents";
+import type { Ability, AbilityFactory, AgentRenderCtx } from "@lloyal-labs/lloyal-agents";
 import {
-  createAppRegistry,
+  createAbilityRegistry,
   createInMemoryConfigStore,
   reportTool,
   renderSpine,
   renderAgentPreamble,
 } from "@lloyal-labs/rig";
-import { createWikipediaApp } from "@lloyal-labs/wikipedia-app";
+import { createWikipediaAbility } from "@lloyal-labs/wikipedia-ability";
 import { RunnerCtx } from "./runner-ctx.js";
 import { reportBody } from "./state.js";
 import type { Command, WorkflowEvent } from "./protocol.js";
 
 /**
- * The AgentApps this harness enables. Before enabling, the boot provisions
- * whatever models each app declares (wikipedia needs nothing; corpus/web need a
- * reranker) — so add an installed app's factory here and the model it needs is
- * fetched for you. Install more with `lloyal install <app>`.
+ * The Abilities this harness enables. Before enabling, the boot provisions
+ * whatever models each ability declares (wikipedia needs nothing; corpus/web need a
+ * reranker) — so add an installed ability's factory here and the model it needs is
+ * fetched for you. Install more with `lloyal install <ability>`.
  */
-export const apps: AppFactory[] = [createWikipediaApp];
+export const abilities: AbilityFactory[] = [createWikipediaAbility];
 
 const MAX_TURNS = 8;
 
@@ -189,20 +189,20 @@ export function* harness(
   yield* WindDown.set(runner.windDown);
   yield* CancelAgent.set(runner.cancelAgent);
 
-  // Compose your AgentApps. Seed the config store from the Runner's live config so
-  // each app reads its own entry on enable (empty for the default wikipedia — it
+  // Compose your Abilities. Seed the config store from the Runner's live config so
+  // each ability reads its own entry on enable (empty for the default wikipedia — it
   // needs no reranker, config, or auth). The boot has already provisioned any
-  // model these apps declare (see `apps` above); here we just enable each one.
+  // model these abilities declare (see `abilities` above); here we just enable each one.
   const configStore = createInMemoryConfigStore();
-  for (const [name, cfg] of Object.entries(runner.config().apps)) {
+  for (const [name, cfg] of Object.entries(runner.config().abilities)) {
     yield* configStore.set(name, cfg);
   }
-  const registry = yield* createAppRegistry({ configStore });
-  for (const app of apps) yield* registry.enable(app);
+  const registry = yield* createAbilityRegistry({ configStore });
+  for (const ability of abilities) yield* registry.enable(ability);
 
   // Boot done — announce it with MEASURED facts, not hardcoded strings: the
   // model's id + on-disk size (the boot stat'd the weight into the config), the
-  // surface that mounted, and the apps actually enabled (read from the registry).
+  // surface that mounted, and the abilities actually enabled (read from the registry).
   // Every surface folds this one event, so the header is identical everywhere.
   const cfg = runner.config();
   events.send({
@@ -210,7 +210,7 @@ export function* harness(
     facts: {
       model: { id: cfg.model.id ?? "model", sizeBytes: cfg.model.sizeBytes ?? 0 },
       surface: cfg.surface ?? "cli",
-      apps: registry.enabled().map((a) => a.name),
+      abilities: registry.enabled().map((a) => a.name),
     },
   });
 
@@ -236,9 +236,9 @@ export function* harness(
   }
 }
 
-/** Per-agent system prompt — renders the app's `skill.eta` with the render ctx. */
-function agentPreamble(app: App, taskIndex: number): string {
-  return renderAgentPreamble(app, {
+/** Per-agent system prompt — renders the ability's `skill.eta` with the render ctx. */
+function agentPreamble(ability: Ability, taskIndex: number): string {
+  return renderAgentPreamble(ability, {
     maxTurns: MAX_TURNS,
     agentCount: ANGLES.length,
     siblingTasks: [],
@@ -252,18 +252,18 @@ function* runQuery(
   session: Session,
   _events: EventBus<WorkflowEvent>,
 ): Operation<string> {
-  const registry = yield* AppRegistryCtx.expect();
-  const apps = registry.enabled();
-  if (apps.length === 0) {
+  const registry = yield* AbilityRegistryCtx.expect();
+  const abilities = registry.enabled();
+  if (abilities.length === 0) {
     throw new Error(
-      "No AgentApp is enabled — enable one in harness.ts (e.g. `yield* registry.enable(createWikipediaApp)`).",
+      "No Ability is enabled — enable one in harness.ts (e.g. `yield* registry.enable(createWikipediaAbility)`).",
     );
   }
   // Read BEFORE the turn is committed: a trunk here means an article already
   // exists, so this run deepens it instead of opening a new one.
   const mode = session.trunk ? "deepen" : "fresh";
-  const tools = [...apps.flatMap((a) => [...a.tools]), reportTool];
-  const spinePrompt = renderSpine({ apps });
+  const tools = [...abilities.flatMap((a) => [...a.tools]), reportTool];
+  const spinePrompt = renderSpine({ abilities });
 
   // Two agents, in parallel, over one shared spine. `report` is the terminal
   // tool; `pruneOnReturn` frees each agent's KV as it finishes.
@@ -286,7 +286,7 @@ function* runQuery(
         orchestrate: parallel(
           ANGLES.map((angle, i) => ({
             content: `${query}\n\nFocus: ${angle}`,
-            systemPrompt: agentPreamble(apps[0], i),
+            systemPrompt: agentPreamble(abilities[0], i),
             seed: 1000 + i,
           })),
         ),

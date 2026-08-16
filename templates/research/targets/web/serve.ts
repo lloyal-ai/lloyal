@@ -6,7 +6,7 @@
  * the browser connects with `connectWss` (see `web-bridge.ts`).
  *
  * `npm run serve` builds + starts this; then `npm run dev:web` serves the browser
- * app that talks to it. Loopback + no-auth for local dev — token auth is a
+ * ability that talks to it. Loopback + no-auth for local dev — token auth is a
  * front-door concern, deferred.
  *
  * ESBUILT (it injects `runServedSession` → the harness → its `.eta` prompts, so it
@@ -113,7 +113,7 @@ function* resolveConfig(): Operation<Config> {
   return {
     version: 1,
     sources: {},
-    apps: {},
+    abilities: {},
     defaults: { reasoningMode: "flat", effort: "high", maxTurns: 10 },
     model: { path: modelPath, reranker: rerankerPath, nCtx: llm.context ?? 32768 },
   };

@@ -15,8 +15,8 @@
  * wind-down, the seam is already here; you don't migrate to a different shape.
  *
  * The reranker is deliberately NOT a Runner concern: the boot's
- * `provisionAppModels` reads your enabled apps' `services` and publishes the
- * reranker on `RerankerCtx`. So an app that needs one just works, and the Runner
+ * `provisionAbilityModels` reads your enabled abilities' `services` and publishes the
+ * reranker on `RerankerCtx`. So an ability that needs one just works, and the Runner
  * stays about the edge shell, not services.
  *
  * NOT a platform contract — `@lloyal-labs/host` speaks `ServedHarness`, never

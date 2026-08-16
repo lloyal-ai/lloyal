@@ -7,7 +7,7 @@
  * breaking the "never blocks" promise).
  */
 import { describe, it, expect } from 'vitest';
-import { formatAttentionSurface } from '../src/scaffold/vendor-app';
+import { formatAttentionSurface } from '../src/scaffold/vendor-ability';
 import type { AttentionSurface } from '../src/describe';
 
 // Cast helper: feed deliberately ill-typed shapes through the typed signature.

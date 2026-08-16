@@ -2,8 +2,8 @@
  * The CLI target — where your research harness runs in a terminal.
  *
  * Generated for you and rarely touched. It does four things: resolve the
- * resident reasoning model, provision the Services the enabled apps declare (the
- * corpus/web apps need a reranker → `provisionAppModels` resolves + loads it and
+ * resident reasoning model, provision the Services the enabled abilities declare (the
+ * corpus/web abilities need a reranker → `provisionAbilityModels` resolves + loads it and
  * publishes it on `RerankerCtx`), build this harness's edge `Runner`, pick a
  * surface, and run your harness over it. The surface pick is the whole "one
  * harness, many targets" idea in miniature — the same `harness(ctx, events,
@@ -24,8 +24,8 @@ import { main, call, ensure, createSignal } from "effection";
 import { createBus } from "@lloyal-labs/binding";
 import { ipc, ndjson } from "@lloyal-labs/binding/node";
 import { createContext } from "@lloyal-labs/lloyal.node";
-import { resolveModel, provisionAppModels } from "@lloyal-labs/rig/node";
-import { harness, apps } from "../../harness/harness.js";
+import { resolveModel, provisionAbilityModels } from "@lloyal-labs/rig/node";
+import { harness, abilities } from "../../harness/harness.js";
 import { RunnerCtx } from "../../harness/runner-ctx.js";
 import { makeEdgeRunner } from "../../harness/served-runtime.js";
 import type { Command, WorkflowEvent } from "../../harness/protocol.js";
@@ -99,15 +99,15 @@ main(function* () {
     }),
   );
 
-  // Provision the Services the enabled apps declare — corpus + web both declare
+  // Provision the Services the enabled abilities declare — corpus + web both declare
   // `services: ['reranker']`, so this resolves (fetch + digest-verify on first
   // run, no key) + loads the cross-encoder and publishes it on RerankerCtx, which
   // the harness's `registry.enable` reads. Reads the reranker spec from harness.yml
   // (`model.reranker`), else the platform catalog default.
   let fetchingReranker = false;
   try {
-    yield* provisionAppModels({
-      apps,
+    yield* provisionAbilityModels({
+      abilities,
       projectRoot: process.cwd(),
       reranker: config.model?.reranker,
       // 10 leases (trunk + queryBranch + 8 scoring leaves); nCtx 16384 (rig
@@ -129,7 +129,7 @@ main(function* () {
   const cfg: Config = {
     version: 1,
     sources: {},
-    apps: {},
+    abilities: {},
     defaults: { reasoningMode: "flat", effort: "high", maxTurns: 10 },
     model: { path: modelPath, nCtx: context },
   };

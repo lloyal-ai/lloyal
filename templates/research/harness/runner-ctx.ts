@@ -9,11 +9,11 @@
  *   - cli   → {@link makeEdgeRunner}   (in-memory config, no-op reload, one boot)
  *   - web   → {@link makeServedRunner} (per-session, tenant-isolated)
  *
- * (The reranker is NOT a Runner concern: the boot's `provisionAppModels` reads
- * the enabled apps' `services` and publishes the reranker on `RerankerCtx` in the
+ * (The reranker is NOT a Runner concern: the boot's `provisionAbilityModels` reads
+ * the enabled abilities' `services` and publishes the reranker on `RerankerCtx` in the
  * harness's scope — the same context `registry.enable` reads. So a harness that
  * outgrows this template gets the SAME platform contract: a reranker-less Runner +
- * `provisionAppModels` for services.)
+ * `provisionAbilityModels` for services.)
  *
  * NOT a platform contract — `@lloyal-labs/host` speaks `ServedHarness`, never
  * `Runner`. This is the reference harness's private substrate, reproduced so the

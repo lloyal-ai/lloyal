@@ -5,14 +5,14 @@ import { spawn } from 'node:child_process';
 import type { Command } from '../command.js';
 import { BundleVerificationError } from '../verify.js';
 import {
-  parseAppSpec,
-  verifyAndVendorApp,
+  parseAbilitySpec,
+  verifyAndVendorAbility,
   InvalidAppSpecError,
   type VendoredApp,
-} from '../scaffold/vendor-app.js';
+} from '../scaffold/vendor-ability.js';
 
 const USAGE = [
-  'lloyal install — install a signed HDK app from apps.lloyal.ai into the current project',
+  'lloyal install — install a signed HDK ability from apps.lloyal.ai into the current project',
   '',
   'Usage:',
   '  lloyal install [--allow-scripts] <publisher>/<name>[@<semver>]',
@@ -34,7 +34,7 @@ const USAGE = [
   '  1. Fetch the signed catalog at apps.lloyal.ai/v1/catalog.json; Ed25519-verify',
   '     against the framework-vendored trust roots.',
   '  2. Resolve <publisher>/<name>[@<semver>] to a specific catalog version entry. The',
-  '     entry carries the npm package name (`importName`, e.g. `@acme/jira-app`) — the',
+  '     entry carries the npm package name (`importName`, e.g. `@acme/jira-ability`) — the',
   '     symbol the harness `import`s from once the tarball is installed.',
   '  3. Fetch the manifest; cross-check name/version/sizeBytes against the catalog.',
   '  4. Fetch the tarball; Ed25519-verify against the manifest\'s signature; cross-check',
@@ -52,7 +52,7 @@ const USAGE = [
 
 export const installCommand: Command = {
   name: 'install',
-  summary: 'Install a signed HDK app from apps.lloyal.ai into the current project',
+  summary: 'Install a signed HDK ability from apps.lloyal.ai into the current project',
   usage: USAGE,
   async run(argv) {
     const { values, positionals } = parseArgs({
@@ -83,7 +83,7 @@ export const installCommand: Command = {
 
     let spec;
     try {
-      spec = parseAppSpec(positionals[0]);
+      spec = parseAbilitySpec(positionals[0]);
     } catch (err) {
       if (err instanceof InvalidAppSpecError) {
         process.stderr.write(`lloyal install: ${err.message}\n`);
@@ -98,7 +98,7 @@ export const installCommand: Command = {
     // tarball can never reach `npm install`.
     let vendored: VendoredApp;
     try {
-      vendored = await verifyAndVendorApp(process.cwd(), spec, { disclose: true });
+      vendored = await verifyAndVendorAbility(process.cwd(), spec, { disclose: true });
     } catch (err) {
       process.stderr.write(`lloyal install: ${asMessage(err)}\n`);
       return 1;

@@ -13,7 +13,7 @@ import type { Config, ConfigOrigin } from './config-types.js';
 
 export type Phase = 'idle' | 'recon' | 'query' | 'plan' | 'research' | 'synth' | 'done';
 
-/** Drives which top-level view the App renders. Distinct from `phase` —
+/** Drives which top-level view the Ability renders. Distinct from `phase` —
  *  `phase` tracks the workflow progress; `uiPhase` tracks what the user
  *  currently interacts with. */
 export type UiPhase =
@@ -36,10 +36,10 @@ export type UiPhase =
  *  everywhere — no 'chain' alias. */
 export type Mode = 'flat' | 'deep';
 
-/** One cited source, extracted CONSUMER-side from a tool result (the App
+/** One cited source, extracted CONSUMER-side from a tool result (the Ability
  *  Protocol prescribes no result schema). Web tools populate url/title/snippet
- *  today; image (og:image) + icon (favicon) arrive once the web app ≥1.2.0
- *  emits them. App-agnostic — corpus/other apps fill whatever subset applies. */
+ *  today; image (og:image) + icon (favicon) arrive once the web ability ≥1.2.0
+ *  emits them. Ability-agnostic — corpus/other abilities fill whatever subset applies. */
 export interface SourceMeta {
   url?: string;
   title?: string;
@@ -83,7 +83,7 @@ export type TimelineItem =
       hosts: string[];
       resultCount: number | null;
       /** Per-source citation metadata extracted from the tool's (free-form)
-       *  result — the App Protocol prescribes no result schema, so this is a
+       *  result — the Ability Protocol prescribes no result schema, so this is a
        *  CONSUMER-side convention parsed in summarizeResult from known tool
        *  shapes (web_search/fetch_page already return url+title+snippet;
        *  fetch_page additionally emits og:image + favicon once web ≥1.2.0).
@@ -242,7 +242,7 @@ export interface Toast {
   id: number;
 }
 
-/** A signed entitlement disclosed by an app's catalog metadata. The `key`
+/** A signed entitlement disclosed by an ability's catalog metadata. The `key`
  *  maps to a privacy-label-style pill (network → Internet, etc.); `label`
  *  is the human-readable name carried alongside it. */
 export interface AppEntitlement {
@@ -250,13 +250,13 @@ export interface AppEntitlement {
   label: string;
 }
 
-/** A view-ready descriptor for one installed (registry-enabled) AgentApp.
- *  Joins the app's local manifest with its signed catalog metadata
+/** A view-ready descriptor for one installed (registry-enabled) Ability.
+ *  Joins the ability's local manifest with its signed catalog metadata
  *  (title/iconUrl/entitlements from apps.lloyal.ai) so the Settings drawer
- *  can render the app card, its tools, its config schema, and its current
+ *  can render the ability card, its tools, its config schema, and its current
  *  stored config. Built engine-side by main.ts and forwarded via the
- *  `apps:state` event; the reducer drops it whole into `AppState.apps`. */
-export interface AppDescriptor {
+ *  `abilities:state` event; the reducer drops it whole into `AppState.abilities`. */
+export interface AbilityDescriptor {
   /** manifest.name (e.g. "web") — routing key + config-store key. */
   name: string;
   /** catalog metadata.title ?? manifest.hints?.shortName ?? protocol.name */
@@ -296,7 +296,7 @@ export interface AppState {
   mode: Mode | null;
   plan: {
     intent: string;
-    tasks: { description: string; app?: string }[];
+    tasks: { description: string; ability?: string }[];
     clarifyQuestions: string[];
     tokenCount: number;
     timeMs: number;
@@ -374,19 +374,19 @@ export interface AppState {
    *  determines which CTA is highlighted. Null once boot has progressed
    *  past the failure or the recovery succeeded. */
   bootError: { kind: 'llm' | 'reranker' | 'backend-pack'; message: string } | null;
-  /** Per-app participation in the next query, keyed by `manifest.name`.
+  /** Per-ability participation in the next query, keyed by `manifest.name`.
    *  `true` = included; `false` = configured-but-excluded (user opted out
    *  for this session); missing key = treat as included by default. The
    *  filter is applied at submit time in main.ts; `runQuery`'s
-   *  `appFilter` opt carries the included-names array. Reset to `true`
+   *  `abilityFilter` opt carries the included-names array. Reset to `true`
    *  on reconfigure (`set_app_config`) — a config
-   *  change is a strong signal of intent to use the app. */
+   *  change is a strong signal of intent to use the ability. */
   participation: Record<string, boolean>;
-  /** Installed AgentApps surfaced into the renderer — one descriptor per
-   *  registry-enabled app, joined with its signed catalog metadata. Drives
+  /** Installed Abilities surfaced into the renderer — one descriptor per
+   *  registry-enabled ability, joined with its signed catalog metadata. Drives
    *  the Settings drawer. Re-emitted whole on boot completion and after
    *  every registry enable/disable/config change. */
-  apps: AppDescriptor[];
+  abilities: AbilityDescriptor[];
 }
 
 export const initialState: AppState = {
@@ -426,5 +426,5 @@ export const initialState: AppState = {
   corpusStatus: null,
   bootError: null,
   participation: {},
-  apps: [],
+  abilities: [],
 };

@@ -7,7 +7,7 @@
  * runtime-free. `basic`'s runner (`makeEdgeRunner`) holds config in memory, so
  * there are no on-disk loaders to carve out — this is the whole config surface.
  *
- * It's deliberately lean: `apps` (per-app config the harness seeds the config
+ * It's deliberately lean: `abilities` (per-ability config the harness seeds the config
  * store from) + `model` (where the resident model lives). Grow it as your harness
  * grows — the reference `research` template's version adds run `defaults`
  * (reasoning mode / effort) the same way.
@@ -20,11 +20,11 @@ export interface ConfigSources {
   outputDir?: string;
 }
 
-/** Per-app stored config, keyed by `manifest.name` → the app's config object
- *  (whatever the app's `configSchema` declares; e.g. `{ corpusPath }`,
+/** Per-ability stored config, keyed by `manifest.name` → the ability's config object
+ *  (whatever the ability's `configSchema` declares; e.g. `{ corpusPath }`,
  *  `{ tavilyKey }`). The harness never reads inside these objects — it
- *  whole-replaces an app's entry and hands it to the registry, which validates
- *  against the app's `configSchema` on enable. The default wikipedia app needs
+ *  whole-replaces an ability's entry and hands it to the registry, which validates
+ *  against the ability's `configSchema` on enable. The default wikipedia ability needs
  *  none, so this stays empty. */
 export type ConfigApps = Record<string, Record<string, unknown>>;
 
@@ -41,8 +41,8 @@ export interface ConfigModel {
    *  caller's concern (`rig.resolveModel`) — config just stores whatever the
    *  boot resolved. */
   path?: string;
-  /** The reranker model path/id, when an enabled app declares the `reranker`
-   *  service. Empty for the default wikipedia app (needs none). */
+  /** The reranker model path/id, when an enabled ability declares the `reranker`
+   *  service. Empty for the default wikipedia ability (needs none). */
   reranker?: string;
   /** LLM context window size. Null/undefined falls through to the default. */
   nCtx?: number;
@@ -58,10 +58,10 @@ export interface ConfigModel {
 export interface Config {
   version: 1;
   sources: ConfigSources;
-  /** Per-app stored config, keyed by `manifest.name`. The harness seeds
+  /** Per-ability stored config, keyed by `manifest.name`. The harness seeds
    *  `configStore` from this on boot (loop over entries) and whole-replaces
-   *  an app's entry on `set_app_config`. */
-  apps: ConfigApps;
+   *  an ability's entry on `set_app_config`. */
+  abilities: ConfigApps;
   model: ConfigModel;
   /** Which surface this process mounted (`cli` · `desktop` · `pipe` · `web`) —
    *  a boot-time runtime fact the harness echoes into the boot header. */

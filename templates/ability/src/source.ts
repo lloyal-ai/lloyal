@@ -4,9 +4,9 @@ import { __NAME_PASCAL__SearchTool } from "./tools/search";
 import { __NAME_PASCAL__FetchTool } from "./tools/fetch";
 
 /**
- * Source for the __NAME__ app — exposes search + fetch tools.
+ * Source for the __NAME__ ability — exposes search + fetch tools.
  *
- * This scaffolded version calls Wikipedia's public REST so the app is
+ * This scaffolded version calls Wikipedia's public REST so the ability is
  * runnable out of the box. Replace the body of each tool's `execute`
  * method with calls to your actual __NAME__ backend, leaving the schema +
  * return shape intact.
