@@ -53,10 +53,15 @@ jobs:
         if: success() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.skip_publish))
         run: |
           # Fail with a legible message rather than npm's ENEEDAUTH, which reads
-          # like a broken token when the usual cause is simply that the secret
-          # was never added to this repository.
-          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "::error::NPM_TOKEN is not set for this repository. Add it under" \
+          # like a broken token when the usual cause is that no auth is configured.
+          # TWO valid auth paths, and this must accept either. Trusted publishing
+          # (OIDC) needs no secret — the runner exchanges the job's id-token for a
+          # short-lived credential, which is why this repository holds no NPM_TOKEN.
+          # ACTIONS_ID_TOKEN_REQUEST_URL is set exactly when `id-token: write` is
+          # granted, so it is the honest probe for "OIDC is available here".
+          # Checking only the token would abort before the path that replaced it.
+          if [ -z "${NODE_AUTH_TOKEN:-}" ] && [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::No npm auth available. Configure trusted publishing on npmjs.com (preferred), or add NPM_TOKEN under" \
                  "Settings > Secrets and variables > Actions. The token needs the" \
                  "@lloyal-labs scope at read+write, and note that npm no longer lets" \
                  "CI CREATE a package name — only publish new versions of existing ones."
