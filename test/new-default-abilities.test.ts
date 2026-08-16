@@ -48,8 +48,8 @@ beforeEach(() => {
     async (_dir: string, spec: { name: string }): Promise<VendoredApp> => ({
       name: spec.name,
       importName: `@lloyal-labs/${spec.name.split('/')[1]}-ability`,
-      version: '1.3.0',
-      vendorRelPath: `vendor/${spec.name.replace('/', '__')}-1.3.0.tgz`,
+      version: '2.0.0',
+      vendorRelPath: `vendor/${spec.name.replace('/', '__')}-2.0.0.tgz`,
       integrity: 'sha512-stub',
     }),
   );
@@ -84,8 +84,8 @@ describe('new — default abilities are vendored regardless of TTY / --skip-inst
     const dir = await scaffold('r1', ['--template', 'research']);
     expect(vendoredSpecs()).toEqual(['lloyal/corpus', 'lloyal/web']);
     // The pin travels with the spec — the vendored version must be reproducible.
-    expect(vendorMock.mock.calls[0][1]).toMatchObject({ name: 'lloyal/corpus', semver: '1.3.0' });
-    expect(vendorMock.mock.calls[1][1]).toMatchObject({ name: 'lloyal/web', semver: '1.3.0' });
+    expect(vendorMock.mock.calls[0][1]).toMatchObject({ name: 'lloyal/corpus', semver: '2.0.0' });
+    expect(vendorMock.mock.calls[1][1]).toMatchObject({ name: 'lloyal/web', semver: '2.0.0' });
     expect(marker(dir).abilities).toEqual(DEFAULT_ABILITIES.research);
     // Nothing pending → the panel is the plain "ready" one.
     expect(stdout).toContain('is ready.');
@@ -107,16 +107,16 @@ describe('new — default abilities are vendored regardless of TTY / --skip-inst
     expect(vendorMock).not.toHaveBeenCalled();
     // The specs are still recorded, so `bin/run.js` can name them at boot.
     expect(marker(dir).abilities).toEqual(DEFAULT_ABILITIES.research);
-    expect(stdout).toContain('npx lloyal-ai install lloyal/corpus@1.3.0');
-    expect(stdout).toContain('npx lloyal-ai install lloyal/web@1.3.0');
+    expect(stdout).toContain('npx lloyal-ai install lloyal/corpus@2.0.0');
+    expect(stdout).toContain('npx lloyal-ai install lloyal/web@2.0.0');
     expect(stdout).toContain('will not typecheck or start');
   });
 
   it('a fetch failure warns and reports the spec as pending, but still scaffolds', async () => {
     vendorMock.mockRejectedValue(new Error('getaddrinfo ENOTFOUND apps.lloyal.ai'));
     const dir = await scaffold('r4', ['--template', 'research']);
-    expect(stderr).toContain('could not fetch default ability lloyal/corpus@1.3.0');
-    expect(stdout).toContain('npx lloyal-ai install lloyal/corpus@1.3.0');
+    expect(stderr).toContain('could not fetch default ability lloyal/corpus@2.0.0');
+    expect(stdout).toContain('npx lloyal-ai install lloyal/corpus@2.0.0');
     expect(marker(dir).template).toBe('research'); // the scaffold itself survived
   });
 });
@@ -127,9 +127,9 @@ describe('printNextSteps — pending abilities come BEFORE the run commands', ()
       name: 'proj',
       targets: ['cli'],
       installed: false,
-      pendingAbilities: ['lloyal/corpus@1.3.0'],
+      pendingAbilities: ['lloyal/corpus@2.0.0'],
     });
-    const required = stdout.indexOf('npx lloyal-ai install lloyal/corpus@1.3.0');
+    const required = stdout.indexOf('npx lloyal-ai install lloyal/corpus@2.0.0');
     const runIt = stdout.indexOf('Run it');
     expect(required).toBeGreaterThan(-1);
     expect(runIt).toBeGreaterThan(-1);
