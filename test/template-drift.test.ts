@@ -95,6 +95,27 @@ describe('templates cannot drift from the runtime they pin', () => {
     }
   });
 
+  it('a scaffolded manifest declares the field the runtime reads', () => {
+    // The scaffolder wrote `appProtocolVersion` after the rename, which nothing
+    // reads. Neither half fails on it: `assertAbilityProtocolVersion` returns
+    // early when the version is undefined, and the publish worker falls back to
+    // its own constant. So the declaration is silently discarded rather than
+    // rejected — and stays wrong until the supported set changes, at which point
+    // an ability that believed it declared 3.0 has declared nothing.
+    for (const name of templates) {
+      const manifestPath = join(templatesDir, name, 'ability.json');
+      if (!existsSync(manifestPath)) continue;
+      const raw = readFileSync(manifestPath, 'utf8');
+      expect(raw, `templates/${name}/ability.json still writes appProtocolVersion`).not.toMatch(
+        /\bappProtocolVersion\b/,
+      );
+      expect(
+        readJson(manifestPath).abilityProtocolVersion,
+        `templates/${name}/ability.json must declare abilityProtocolVersion`,
+      ).toBeTypeOf('string');
+    }
+  });
+
   it('every ability a template imports is one the scaffolder actually vendors', () => {
     // The precise break: basic/harness.ts imported `@lloyal-labs/wikipedia-ability`
     // while DEFAULT_ABILITIES.basic vendored wikipedia@1.2.0 → `*-wikipedia-app`.
