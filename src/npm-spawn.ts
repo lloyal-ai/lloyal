@@ -29,37 +29,68 @@
 
 import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
 
-const isWindows = process.platform === 'win32';
-
-/** npm's JS entry when we were launched by npm or npx; undefined otherwise. */
-function npmJsEntry(): string | undefined {
-  const p = process.env.npm_execpath;
-  return p && /\.[cm]?js$/i.test(p) ? p : undefined;
+/** What `spawnNpm` decided to run. Separated from the spawn so it is testable. */
+export interface NpmInvocation {
+  cmd: string;
+  argv: string[];
+  /** Owned by this module — see `spawnNpm`, which overrides any caller value. */
+  shell: boolean;
 }
 
 /**
- * Quote one argument for cmd.exe. Only used on the Windows fallback path —
- * every other path passes the argv array to the OS untouched.
+ * Quote one argument for a Windows command line.
+ *
+ * The trailing-backslash case is the one that bites: `C:\\tmp\\` naively quoted
+ * becomes `"C:\\tmp\\"`, and the final backslash escapes the closing quote at the
+ * CommandLineToArgvW layer, swallowing the next argument. Windows paths ending
+ * in a separator are ordinary, so the rule is: double every backslash run that
+ * precedes a quote or the end of the argument, then wrap.
  */
-function quoteForCmd(arg: string): string {
-  if (arg.length > 0 && !/[\s"^&|<>]/.test(arg)) return arg;
-  return `"${arg.replace(/"/g, '""')}"`;
+export function quoteForWindows(arg: string): string {
+  if (arg.length > 0 && !/[\s"^&|<>%!\\]/.test(arg)) return arg;
+  const escaped = arg
+    .replace(/(\\*)"/g, '$1$1\\"')  // backslashes before an embedded quote, then the quote
+    .replace(/(\\*)$/, '$1$1');       // backslashes before the closing quote
+  return `"${escaped}"`;
 }
 
 /**
- * Run `npm <args>`. Drop-in for `spawn('npm', args, opts)` — same return, same
- * events — with the Windows resolution handled once instead of at each call site.
+ * Decide how to invoke npm. Pure: no spawn, no environment reads beyond the
+ * arguments given, so every branch — including the Windows one that cannot run
+ * on this machine — is directly testable.
+ */
+export function resolveNpmInvocation(
+  args: readonly string[],
+  platform: NodeJS.Platform,
+  npmExecPath: string | undefined,
+  nodeExecPath: string = process.execPath,
+): NpmInvocation {
+  if (npmExecPath && /\.[cm]?js$/i.test(npmExecPath)) {
+    return { cmd: nodeExecPath, argv: [npmExecPath, ...args], shell: false };
+  }
+  if (platform !== 'win32') {
+    return { cmd: 'npm', argv: [...args], shell: false };
+  }
+  return { cmd: 'npm.cmd', argv: args.map(quoteForWindows), shell: true };
+}
+
+/**
+ * Run `npm <args>`.
+ *
+ * NOT a drop-in for `spawn('npm', …)` in one respect, deliberately: `opts.shell`
+ * is IGNORED. Whether a shell is used is a consequence of how npm was resolved —
+ * a caller passing `shell: true` alongside the node-entry path would break the
+ * argument passing this module exists to get right — so the decision stays here.
+ * Every other spawn option is forwarded untouched.
  */
 export function spawnNpm(
   args: readonly string[],
   opts: SpawnOptions = {},
 ): ChildProcess {
-  const jsEntry = npmJsEntry();
-  if (jsEntry) {
-    return spawn(process.execPath, [jsEntry, ...args], { ...opts, shell: false });
-  }
-  if (!isWindows) {
-    return spawn('npm', [...args], { ...opts, shell: false });
-  }
-  return spawn('npm.cmd', args.map(quoteForCmd), { ...opts, shell: true });
+  const { cmd, argv, shell } = resolveNpmInvocation(
+    args,
+    process.platform,
+    process.env.npm_execpath,
+  );
+  return spawn(cmd, argv, { ...opts, shell });
 }
