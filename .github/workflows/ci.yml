@@ -67,7 +67,7 @@ jobs:
       # Non-interactive: every answer supplied as a flag.
       - name: Scaffold via flags
         if: matrix.mode == 'flags'
-        run: node bin/run.js new smoke --yes --targets cli --template basic
+        run: node bin/run.js new smoke --yes --targets cli,web --template basic
 
       # Interactive: the wizard renders, and the pty feeds it newlines to accept
       # each default. This is the path the reported crash actually came through —
@@ -90,6 +90,20 @@ jobs:
           cd smoke
           test -d node_modules || npm install
           npx tsc --noEmit
+
+      # tsc CANNOT see this class of bug. It does not resolve `.css` (or any
+      # asset) imports — those are Vite's job — so a scaffold missing a
+      # stylesheet typechecks cleanly and dies the moment a browser target
+      # starts. That shipped: App.tsx imported ./ability.css against a file
+      # named app.css, and `tsc --noEmit` was green throughout.
+      #
+      # `build:web` resolves every import without a server or a model.
+      - name: The web target must resolve its imports
+        if: matrix.mode == 'flags'
+        shell: bash
+        run: |
+          cd smoke
+          npx vite build --config targets/web/vite.web.config.ts
 
       # `lloyal install` spawns npm too, and was equally dead on Windows. The
       # scaffold above proves `new`; this proves the second command a developer

@@ -13,7 +13,7 @@
  * It's transport-agnostic: it reads only `window.harness`, a bridge injected by
  * desktop's preload (IPC) or web's boot (`connectWss`).
  */
-import "./ability.css";
+import "./app.css";
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import {
   reduce,
