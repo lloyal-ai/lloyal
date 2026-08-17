@@ -137,6 +137,51 @@ And the model is a **dial** — the *same* harness runs across compute tiers, ke
 
 **[Docs →](https://docs.lloyal.ai/cli)** · **[Build an App →](https://docs.lloyal.ai/build-an-app/what-is-an-app)** · **[The HDK →](https://github.com/lloyal-ai/hdk)**
 
+## Troubleshooting
+
+### Windows: `spawn EINVAL` during `lloyal new`
+
+**Fixed in 1.0.3.** On earlier versions the scaffold completes and then throws
+while running `npm install` for you:
+
+```
+vendored lloyal/wikipedia@2.0.0 → vendor/lloyal__wikipedia-2.0.0.tgz
+ERROR  spawn EINVAL
+```
+
+Since the CVE-2024-27980 fix, Node (18.20.2 / 20.12.2 / 22 / 24) refuses to
+spawn a `.cmd` or `.bat` without a shell — and on Windows npm **is** `npm.cmd`.
+
+**Your project is fine.** Only the automatic install failed:
+
+```sh
+cd <project>
+npm install
+npm start
+```
+
+To avoid it entirely, upgrade: `npx lloyal-ai@latest new`.
+
+### Windows: how npm is invoked, and the one case where `%` matters
+
+The CLI runs npm four ways, in order of preference:
+
+1. npm's own JS entry from `npm_execpath` — set by `npm` and `npx`
+2. `npm-cli.js` found beside your `node` executable
+3. plain `npm` on macOS and Linux
+4. `npm.cmd` through a shell — Windows only, and only if 1 and 2 both fail
+
+The first two run npm's JavaScript directly with your `node`, so arguments reach
+npm exactly as written. That is deliberate: **cmd.exe expands `%VAR%` even inside
+double quotes**, and an argument passed through `cmd /c` cannot escape it. Since
+`lloyal install <publisher>/<name>` carries text you supply, keeping Windows off
+cmd.exe is what makes a name containing `%` behave.
+
+Step 4 exists only for an installation where npm's JS entry is missing. If you
+are on that path and an argument contains `%`, cmd may substitute an environment
+variable before npm sees it. Reinstalling Node from nodejs.org restores the
+normal layout and step 2 takes over.
+
 ## License
 
 Apache-2.0 — the CLI is fully open. (The HDK runtime packages are FSL-1.1-Apache-2.0; see each package's LICENSE.)
