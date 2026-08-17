@@ -40,9 +40,16 @@ describe('spawnNpm', () => {
   it('ignores npm_execpath when it is not a JS entry', () => {
     // npm_execpath can point at a shim; only a .js/.cjs/.mjs entry is runnable
     // by `node`, and guessing wrong would fail at spawn rather than here.
+    //
+    // Assert the INTENT — the shim is never handed to node — rather than which
+    // fallback wins. Step 2 finds npm-cli.js beside node on a normal install, so
+    // `cmd` is legitimately `process.execPath` there; an earlier version of this
+    // test asserted otherwise and passed only where that lookup failed.
     process.env.npm_execpath = '/usr/local/bin/npm';
     spawnNpm(['install']);
-    expect(argsOf()[0]).not.toBe(process.execPath);
+    const [, argv] = argsOf();
+    expect(argv).not.toContain('/usr/local/bin/npm');
+    expect(argv[argv.length - 1]).toBe('install');
   });
 
   it('passes arguments through untouched when there is no shell', () => {
