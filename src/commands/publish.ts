@@ -2,7 +2,8 @@ import { parseArgs } from 'node:util';
 import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
-import { spawn } from 'node:child_process';
+import type { ChildProcessByStdio } from 'node:child_process';
+import type { Readable } from 'node:stream';
 import { spawnNpm } from '../npm-spawn.js';
 import type { Command } from '../command.js';
 import { ensureFreshToken } from '../cf-access-oauth.js';
@@ -453,11 +454,12 @@ async function lookupPublisherHandle(
  */
 async function npmPack(abilityDir: string, packTmpDir: string): Promise<string> {
   return new Promise<string>((resolvePromise, reject) => {
-    const proc = spawn(
-      'npm',
+    // stdio pipes stdout+stderr, so both streams exist; the generic ChildProcess
+    // return type cannot know that, and asserting once beats `!` at every use.
+    const proc = spawnNpm(
       ['pack', '--pack-destination', packTmpDir, '--json'],
       { cwd: abilityDir, stdio: ['ignore', 'pipe', 'pipe'] },
-    );
+    ) as ChildProcessByStdio<null, Readable, Readable>;
     let stdout = '';
     let stderr = '';
     proc.stdout.on('data', (chunk: Buffer) => {
