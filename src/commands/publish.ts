@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawn } from 'node:child_process';
+import { spawnNpm } from '../npm-spawn.js';
 import type { Command } from '../command.js';
 import { ensureFreshToken } from '../cf-access-oauth.js';
 import { buildAttentionSurface } from '../describe.js';

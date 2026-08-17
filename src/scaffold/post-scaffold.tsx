@@ -7,20 +7,19 @@
 import { useEffect, useState, type ReactElement } from 'react';
 import { Box, Text, render, useApp } from 'ink';
 import { Spinner, ThemeProvider } from '@inkjs/ui';
-import { spawn } from 'node:child_process';
+import { spawnNpm } from '../npm-spawn.js';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { cliTheme, ACCENT_SGR } from './palette.js';
 import type { Target } from './prune-targets.js';
 
-const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 function InstallScreen({ dir, onDone }: { dir: string; onDone: (ok: boolean) => void }): ReactElement {
   const { exit } = useApp();
   const [phase, setPhase] = useState<'installing' | 'ok' | 'fail'>('installing');
 
   useEffect(() => {
-    const child = spawn(NPM, ['install'], { cwd: dir, stdio: 'ignore' });
+    const child = spawnNpm(['install'], { cwd: dir, stdio: 'ignore' });
     let settled = false;
     const finish = (ok: boolean): void => {
       if (settled) return;
@@ -28,7 +27,7 @@ function InstallScreen({ dir, onDone }: { dir: string; onDone: (ok: boolean) => 
       setPhase(ok ? 'ok' : 'fail');
       onDone(ok);
     };
-    child.on('close', (code) => finish(code === 0));
+    child.on('close', (code: number | null) => finish(code === 0));
     child.on('error', () => finish(false));
     return () => {
       if (!settled) child.kill();

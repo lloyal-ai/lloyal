@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util';
 import { readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
+import { spawnNpm } from '../npm-spawn.js';
 import type { Command } from '../command.js';
 import { BundleVerificationError } from '../verify.js';
 import {
@@ -232,9 +233,9 @@ async function rollback(vendored: VendoredApp): Promise<void> {
  */
 function runNpm(args: readonly string[]): Promise<number> {
   return new Promise<number>((resolvePromise) => {
-    const proc = spawn('npm', [...args], { cwd: process.cwd(), stdio: 'inherit' });
+    const proc = spawnNpm(args, { cwd: process.cwd(), stdio: 'inherit' });
     proc.on('error', () => resolvePromise(1));
-    proc.on('close', (code) => resolvePromise(code ?? 1));
+    proc.on('close', (code: number | null) => resolvePromise(code ?? 1));
   });
 }
 
