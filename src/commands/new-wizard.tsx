@@ -243,11 +243,11 @@ export function Wizard({
   // The running answers. A ref so finalize() never reads stale state after the
   // last step's setState hasn't flushed; useState mirrors it for the summary.
   const collected = useRef<Partial<WizardResult>>({});
-  const [name, setName] = useState('');
+  const [, setName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
   const [byoError, setByoError] = useState<string | null>(null);
   const [targets, setTargets] = useState<Target[]>(prefill.targets ?? DEFAULT_TARGETS);
-  const [llm, setLlm] = useState(prefill.llm ?? defaultLlm);
+  const [, setLlm] = useState(prefill.llm ?? defaultLlm);
 
   useInput((input, key) => {
     if (key.ctrl && input === 'c') {

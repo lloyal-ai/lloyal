@@ -132,7 +132,14 @@ function spawnReturning(code: number): EventEmitter {
 }
 
 function recordedNpmCalls(): readonly string[][] {
-  return mockSpawn.mock.calls.map((call: readonly unknown[]) => call[1] as string[]);
+  // spawnNpm resolves npm three ways — `node <npm-cli.js>` when npm_execpath
+  // is set (npm/npx), plain `npm` on POSIX, `npm.cmd` under a shell on
+  // Windows. Every assertion below is about the arguments NPM receives, so
+  // drop a leading JS entry when the helper routed through node.
+  return mockSpawn.mock.calls.map((call: readonly unknown[]) => {
+    const argv = call[1] as string[];
+    return /\.[cm]?js$/i.test(argv[0] ?? '') ? argv.slice(1) : argv;
+  });
 }
 
 async function exists(rel: string): Promise<boolean> {
