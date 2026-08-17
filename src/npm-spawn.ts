@@ -28,6 +28,8 @@
  */
 
 import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 /** What `spawnNpm` decided to run. Separated from the spawn so it is testable. */
 export interface NpmInvocation {
@@ -59,18 +61,40 @@ export function quoteForWindows(arg: string): string {
  * arguments given, so every branch — including the Windows one that cannot run
  * on this machine — is directly testable.
  */
+export function npmCliCandidates(nodeExecPath: string, platform: NodeJS.Platform): string[] {
+  const dir = dirname(nodeExecPath);
+  // Windows ships npm beside node.exe; POSIX puts it a level up in lib/.
+  return platform === 'win32'
+    ? [join(dir, 'node_modules', 'npm', 'bin', 'npm-cli.js')]
+    : [join(dir, '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js')];
+}
+
 export function resolveNpmInvocation(
   args: readonly string[],
   platform: NodeJS.Platform,
   npmExecPath: string | undefined,
   nodeExecPath: string = process.execPath,
+  fileExists: (p: string) => boolean = existsSync,
 ): NpmInvocation {
+  // 1. npm told us where it lives (npm, npx).
   if (npmExecPath && /\.[cm]?js$/i.test(npmExecPath)) {
     return { cmd: nodeExecPath, argv: [npmExecPath, ...args], shell: false };
+  }
+  // 2. Find npm's JS entry beside node. This exists to keep Windows OFF cmd.exe:
+  //    under `shell: true`, cmd expands %VAR% even inside double quotes, and
+  //    there is no escape for that in an argument passed to `cmd /c`. Since
+  //    `lloyal install <publisher>/<name>` puts caller-supplied text on this
+  //    path, running npm's JS directly is the only way to keep it uninterpreted.
+  const found = npmCliCandidates(nodeExecPath, platform).find(fileExists);
+  if (found) {
+    return { cmd: nodeExecPath, argv: [found, ...args], shell: false };
   }
   if (platform !== 'win32') {
     return { cmd: 'npm', argv: [...args], shell: false };
   }
+  // 3. Last resort. Quoting handles spaces and trailing backslashes; `%` remains
+  //    expandable by cmd and cannot be escaped here, so this path is reached only
+  //    when npm's JS entry is genuinely absent.
   return { cmd: 'npm.cmd', argv: args.map(quoteForWindows), shell: true };
 }
 

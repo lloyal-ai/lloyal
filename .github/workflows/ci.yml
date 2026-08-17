@@ -35,3 +35,58 @@ jobs:
           ")
           echo "template files in tarball: $COUNT"
           test "$COUNT" -eq 99
+
+  # The front door, on every platform a developer actually uses.
+  #
+  # `spawn EINVAL` on Windows reached a user because nothing here ever ran the
+  # CLI outside Linux. The failing call needs no model, no GPU and no network —
+  # it is `spawn('npm')`, which Node refuses for a `.cmd` without a shell since
+  # CVE-2024-27980. A free standard runner catches it.
+  front-door:
+    name: Scaffold (${{ matrix.os }} · ${{ matrix.mode }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        mode: [flags, wizard]
+        exclude:
+          # The wizard needs a pty to drive Ink. `script` provides one on POSIX;
+          # Windows has no equivalent without a native pty dependency, so the
+          # interactive path there is still verified by hand. Stated, not hidden.
+          - os: windows-latest
+            mode: wizard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run build
+
+      # Non-interactive: every answer supplied as a flag.
+      - name: Scaffold via flags
+        if: matrix.mode == 'flags'
+        run: node bin/run.js new smoke --yes --targets cli --template basic
+
+      # Interactive: the wizard renders, and the pty feeds it newlines to accept
+      # each default. This is the path the reported crash actually came through —
+      # post-scaffold runs inside an Ink effect.
+      - name: Scaffold via wizard (pty)
+        if: matrix.mode == 'wizard'
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            script -q /dev/null node bin/run.js new smoke < <(printf '\n\n\n\n\n') || true
+          else
+            script -qec "node bin/run.js new smoke" /dev/null < <(printf '\n\n\n\n\n') || true
+          fi
+
+      # The assertion is the same either way: a project that typechecks.
+      - name: The scaffold must build
+        shell: bash
+        run: |
+          test -d smoke || { echo "no project scaffolded"; exit 1; }
+          cd smoke
+          test -d node_modules || npm install
+          npx tsc --noEmit

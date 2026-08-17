@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const mockSpawn = vi.fn(() => ({ on: vi.fn() }));
 vi.mock('node:child_process', () => ({ spawn: mockSpawn }));
 
-const { spawnNpm, resolveNpmInvocation } = await import('../src/npm-spawn');
+const { spawnNpm, resolveNpmInvocation, npmCliCandidates } = await import('../src/npm-spawn');
 
 const argsOf = () => mockSpawn.mock.calls[0] as unknown as [string, string[], Record<string, unknown>];
 const ORIGINAL = process.env.npm_execpath;
@@ -60,21 +60,21 @@ describe('resolveNpmInvocation — every branch, including the one this machine 
   const JS = '/npm/bin/npm-cli.js';
 
   it('POSIX without npm_execpath runs plain npm, no shell', () => {
-    expect(resolveNpmInvocation(['install'], 'darwin', undefined, NODE))
+    expect(resolveNpmInvocation(['install'], 'darwin', undefined, NODE, () => false))
       .toEqual({ cmd: 'npm', argv: ['install'], shell: false });
   });
 
   it('Windows without npm_execpath needs npm.cmd AND a shell', () => {
     // Without shell:true Node throws EINVAL on a .cmd since CVE-2024-27980.
     // That is the reported bug, pinned.
-    const r = resolveNpmInvocation(['install'], 'win32', undefined, NODE);
+    const r = resolveNpmInvocation(['install'], 'win32', undefined, NODE, () => false);
     expect(r.cmd).toBe('npm.cmd');
     expect(r.shell).toBe(true);
   });
 
   it('Windows quotes a path containing a space as ONE argument', () => {
     const dir = 'C:\\Users\\First Last\\tmp';
-    const r = resolveNpmInvocation(['pack', '--pack-destination', dir], 'win32', undefined, NODE);
+    const r = resolveNpmInvocation(['pack', '--pack-destination', dir], 'win32', undefined, NODE, () => false);
     expect(r.argv).toHaveLength(3);
     expect(r.argv[2]).toBe(`"C:\\Users\\First Last\\tmp"`);
   });
@@ -82,7 +82,7 @@ describe('resolveNpmInvocation — every branch, including the one this machine 
   it('Windows doubles a trailing backslash so it cannot escape the closing quote', () => {
     // `"C:\tmp\"` would let the final backslash escape the quote at the
     // CommandLineToArgvW layer and swallow the following argument.
-    const r = resolveNpmInvocation(['pack', 'C:\\tmp\\', '--json'], 'win32', undefined, NODE);
+    const r = resolveNpmInvocation(['pack', 'C:\\tmp\\', '--json'], 'win32', undefined, NODE, () => false);
     expect(r.argv[1]).toBe('"C:\\tmp\\\\"');
     expect(r.argv[2]).toBe('--json');       // the next argument survives
   });
@@ -94,7 +94,29 @@ describe('resolveNpmInvocation — every branch, including the one this machine 
   });
 
   it('leaves ordinary arguments unquoted', () => {
-    expect(resolveNpmInvocation(['install', '--ignore-scripts'], 'win32', undefined, NODE).argv)
+    expect(resolveNpmInvocation(['install', '--ignore-scripts'], 'win32', undefined, NODE, () => false).argv)
       .toEqual(['install', '--ignore-scripts']);
+  });
+});
+
+describe('cmd.exe is avoided when npm\'s JS entry can be found', () => {
+  const NODE_WIN = 'C:\\Program Files\\nodejs\\node.exe';
+
+  it('runs npm-cli.js beside node.exe rather than npm.cmd', () => {
+    const expected = npmCliCandidates(NODE_WIN, 'win32')[0];
+    const r = resolveNpmInvocation(['install'], 'win32', undefined, NODE_WIN, (p) => p === expected);
+    expect(r.shell).toBe(false);
+    expect(r.cmd).toBe(NODE_WIN);
+    expect(r.argv).toEqual([expected, 'install']);
+  });
+
+  it('leaves a %VAR% argument untouched — cmd expands those even inside quotes', () => {
+    // `lloyal install <publisher>/<name>` puts caller-supplied text here, and
+    // there is no escape for % in an argument passed through `cmd /c`.
+    const expected = npmCliCandidates(NODE_WIN, 'win32')[0];
+    const spec = 'acme/%PATH%-ability';
+    const r = resolveNpmInvocation(['install', spec], 'win32', undefined, NODE_WIN, (p) => p === expected);
+    expect(r.shell).toBe(false);
+    expect(r.argv).toContain(spec);
   });
 });
