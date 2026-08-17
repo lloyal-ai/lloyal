@@ -39,21 +39,54 @@ export interface NpmInvocation {
   shell: boolean;
 }
 
+/** cmd.exe metacharacters. Quoting does not reliably neutralise these. */
+const CMD_METACHARACTERS = /[%!&|<>^]/;
+
+/**
+ * Thrown when npm can only be reached through cmd.exe and an argument carries a
+ * character cmd would interpret.
+ */
+export class UnsafeWindowsArgumentError extends Error {
+  constructor(readonly argument: string) {
+    super(
+      `Cannot pass ${JSON.stringify(argument)} to npm on this machine.\n\n` +
+        `npm's JavaScript entry could not be found, so the only remaining way to ` +
+        `run it is through cmd.exe — and cmd interprets % ! & | < > ^ even inside ` +
+        `double quotes. Passing this argument would corrupt it or execute part of ` +
+        `it.\n\n` +
+        `Reinstall Node.js from https://nodejs.org so npm-cli.js sits beside ` +
+        `node.exe, or run the command through npm or npx, and this path is not used.`,
+    );
+    this.name = 'UnsafeWindowsArgumentError';
+  }
+}
+
 /**
  * Quote one argument for a Windows command line.
  *
- * The trailing-backslash case is the one that bites: `C:\\tmp\\` naively quoted
- * becomes `"C:\\tmp\\"`, and the final backslash escapes the closing quote at the
- * CommandLineToArgvW layer, swallowing the next argument. Windows paths ending
- * in a separator are ordinary, so the rule is: double every backslash run that
- * precedes a quote or the end of the argument, then wrap.
+ * Handles what quoting CAN handle: spaces, embedded quotes, and trailing
+ * backslashes — `C:\\tmp\\` naively quoted becomes `"C:\\tmp\\"`, where the final
+ * backslash escapes the closing quote at the CommandLineToArgvW layer and
+ * swallows the next argument.
+ *
+ * It does NOT handle cmd metacharacters, and no amount of quoting does: cmd
+ * expands `%VAR%` inside double quotes, and `& | < > ^ !` remain live. Attempting
+ * to escape them is how a quoting bug becomes an injection. Those arguments are
+ * refused by {@link assertSafeForCmd} before they reach here.
  */
 export function quoteForWindows(arg: string): string {
-  if (arg.length > 0 && !/[\s"^&|<>%!\\]/.test(arg)) return arg;
+  if (arg.length > 0 && !/[\s"\\]/.test(arg)) return arg;
   const escaped = arg
-    .replace(/(\\*)"/g, '$1$1\\"')  // backslashes before an embedded quote, then the quote
-    .replace(/(\\*)$/, '$1$1');       // backslashes before the closing quote
+    .replace(/(\\*)"/g, '$1$1\\"')
+    .replace(/(\\*)$/, '$1$1');
   return `"${escaped}"`;
+}
+
+/** Refuse an argument cmd.exe would interpret. Only the shell path calls this. */
+export function assertSafeForCmd(args: readonly string[]): void {
+  for (const arg of args) {
+    if (CMD_METACHARACTERS.test(arg)) throw new UnsafeWindowsArgumentError(arg);
+  }
 }
 
 /**
@@ -95,6 +128,7 @@ export function resolveNpmInvocation(
   // 3. Last resort. Quoting handles spaces and trailing backslashes; `%` remains
   //    expandable by cmd and cannot be escaped here, so this path is reached only
   //    when npm's JS entry is genuinely absent.
+  assertSafeForCmd(args);
   return { cmd: 'npm.cmd', argv: args.map(quoteForWindows), shell: true };
 }
 

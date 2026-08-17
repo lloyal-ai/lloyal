@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const mockSpawn = vi.fn(() => ({ on: vi.fn() }));
 vi.mock('node:child_process', () => ({ spawn: mockSpawn }));
 
-const { spawnNpm, resolveNpmInvocation, npmCliCandidates } = await import('../src/npm-spawn');
+const { spawnNpm, resolveNpmInvocation, npmCliCandidates, UnsafeWindowsArgumentError } = await import('../src/npm-spawn');
 
 const argsOf = () => mockSpawn.mock.calls[0] as unknown as [string, string[], Record<string, unknown>];
 const ORIGINAL = process.env.npm_execpath;
@@ -98,6 +98,33 @@ describe('resolveNpmInvocation — every branch, including the one this machine 
     const dir = 'C:\\Users\\First Last\\tmp\\';
     const r = resolveNpmInvocation(['pack', dir], 'win32', JS, NODE);
     expect(r).toEqual({ cmd: NODE, argv: [JS, 'pack', dir], shell: false });
+  });
+
+  it('refuses a cmd metacharacter rather than pretending quotes contain it', () => {
+    // cmd expands %VAR% inside double quotes and leaves & | < > ^ ! live. There
+    // is no escape for that in an argument passed through `cmd /c`, so the only
+    // honest options are refuse or corrupt. Refuse, and say how to leave this path.
+    for (const bad of ['acme/%PATH%-ability', 'a&b', 'a|b', 'a^b', 'a<b', 'a>b', 'a!b']) {
+      expect(() => resolveNpmInvocation(['install', bad], 'win32', undefined, NODE, () => false))
+        .toThrow(UnsafeWindowsArgumentError);
+    }
+  });
+
+  it('the refusal names the argument and the way out', () => {
+    try {
+      resolveNpmInvocation(['install', 'a&b'], 'win32', undefined, NODE, () => false);
+      throw new Error('should have thrown');
+    } catch (e) {
+      expect((e as Error).message).toContain('a&b');
+      expect((e as Error).message).toContain('nodejs.org');
+    }
+  });
+
+  it('does NOT refuse when npm\'s JS entry is reachable — nothing parses the argument', () => {
+    const entry = npmCliCandidates(NODE, 'win32')[0];
+    const r = resolveNpmInvocation(['install', 'acme/%PATH%-ability'], 'win32', undefined, NODE, (p) => p === entry);
+    expect(r.shell).toBe(false);
+    expect(r.argv).toContain('acme/%PATH%-ability');
   });
 
   it('leaves ordinary arguments unquoted', () => {

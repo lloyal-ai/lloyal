@@ -90,3 +90,28 @@ jobs:
           cd smoke
           test -d node_modules || npm install
           npx tsc --noEmit
+
+      # `lloyal install` spawns npm too, and was equally dead on Windows. The
+      # scaffold above proves `new`; this proves the second command a developer
+      # runs. Both go through spawnNpm, and neither was covered before.
+      - name: Install an ability into the scaffold
+        if: matrix.mode == 'flags'
+        shell: bash
+        run: |
+          cd smoke
+          node ../bin/run.js install lloyal/web
+          npx tsc --noEmit
+
+  # `lloyal publish` needs a registered publisher, so CI cannot run it end to end
+  # — which is exactly how a broken `npm pack` shipped in the PR that fixed the
+  # other two call sites: the import landed, the call site did not, and no test
+  # anywhere executed publish. This costs a second and fails loudly on that.
+  no-raw-npm-spawn:
+    name: No raw npm spawn outside npm-spawn
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/check-npm-spawn.mjs
