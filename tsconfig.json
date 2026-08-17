@@ -8,6 +8,10 @@
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
+    // The unused import in publish.ts compiled cleanly and shipped a broken
+    // Windows publish path; a reviewer caught what the compiler could have.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "skipLibCheck": true,
     "types": ["node"],
     "sourceMap": true,

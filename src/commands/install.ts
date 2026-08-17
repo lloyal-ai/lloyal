@@ -1,7 +1,6 @@
 import { parseArgs } from 'node:util';
 import { readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { spawn } from 'node:child_process';
 import { spawnNpm } from '../npm-spawn.js';
 import type { Command } from '../command.js';
 import { BundleVerificationError } from '../verify.js';
