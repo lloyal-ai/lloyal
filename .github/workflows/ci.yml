@@ -67,7 +67,7 @@ jobs:
       # Non-interactive: every answer supplied as a flag.
       - name: Scaffold via flags
         if: matrix.mode == 'flags'
-        run: node bin/run.js new smoke --yes --targets cli,web --template basic
+        run: node bin/run.js new smoke --yes --targets cli,desktop,web --template basic
 
       # Interactive: the wizard renders, and the pty feeds it newlines to accept
       # each default. This is the path the reported crash actually came through —
@@ -104,6 +104,16 @@ jobs:
         run: |
           cd smoke
           npx vite build --config targets/web/vite.web.config.ts
+
+      # Bundles main, preload and renderer. No window, no display — the binary
+      # fetch is handled by the template's own ensure-electron.js, which exists
+      # because Electron 42 dropped its postinstall hook.
+      - name: The desktop target must bundle
+        if: matrix.mode == 'flags'
+        shell: bash
+        run: |
+          cd smoke
+          npm run build:desktop
 
       # `lloyal install` spawns npm too, and was equally dead on Windows. The
       # scaffold above proves `new`; this proves the second command a developer
